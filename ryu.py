@@ -6,8 +6,11 @@ from state_machine import StateMachine
 import time
 
 TIME_PER_ACTION = 0.5
-ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
 FRAMES_PER_ACTION_IDLE = 3
+ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
+
+FRAMES_PER_ACTION_RUN = 6
+
 
 def space_down(e): # e is space down ?
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_SPACE
@@ -67,25 +70,40 @@ class Run:
     def __init__(self, ryu):
         self.ryu = ryu
 
+        self.run_quads = [
+            (8, 1096, 38, 95),
+            (56, 1096, 45, 94),
+            (112, 1096, 45, 93),
+            (168, 1096, 35, 95),
+            (216, 1096, 45, 94),
+            (272, 1096, 47, 93),
+        ]
+
     def enter(self, e):
         if right_down(e) or left_up(e):
             self.ryu.dir = self.ryu.face_dir = 1
         elif left_down(e) or right_up(e):
             self.ryu.dir = self.ryu.face_dir = -1
+        self.ryu.frame = 0.0
 
     def exit(self, e):
         if space_down(e):
             self.ryu.fire_ball()
 
     def do(self):
-        self.ryu.frame = (self.ryu.frame + 1) % 8
+        self.ryu.frame = (self.ryu.frame + FRAMES_PER_ACTION_RUN * ACTION_PER_TIME * game_framework.frame_time) % FRAMES_PER_ACTION_RUN
+        # 이동
         self.ryu.x += self.ryu.dir * 5
 
     def draw(self):
-        if self.ryu.face_dir == 1: # right
-            self.ryu.image.clip_draw(self.ryu.frame * 100, 100, 100, 100, self.ryu.x, self.ryu.y)
-        else: # face_dir == -1: # left
-            self.ryu.image.clip_draw(self.ryu.frame * 100, 0, 100, 100, self.ryu.x, self.ryu.y)
+        idx = int(self.ryu.frame)
+        sx, sy, sw, sh = self.run_quads[idx]
+
+        if self.ryu.face_dir == 1:  # 오른쪽
+            self.ryu.image.clip_draw(sx, sy, sw, sh, self.ryu.x, self.ryu.y)
+        else:  # 왼쪽
+            self.ryu.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h',
+                                               self.ryu.x, self.ryu.y, sw, sh)
 
 
 class Ryu:
