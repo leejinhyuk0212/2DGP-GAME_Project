@@ -12,13 +12,14 @@ RUN_SPEED_PPS = (RUN_SPEED_MPS * PIXEL_PER_METER)
 
 TIME_PER_ACTION = 0.5
 ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
-TIME_PER_ACTION_ATTACK_L = 0.4     # 약공(빠름)
-TIME_PER_ACTION_ATTACK_H = 0.7     # 강공(느림)
+TIME_PER_ACTION_ATTACK_L = 0.2   # 약공(빠름)
+TIME_PER_ACTION_ATTACK_H = 0.4    # 강공(느림)
 ACTION_PER_TIME_ATTACK_L = 1.0 / TIME_PER_ACTION_ATTACK_L
 ACTION_PER_TIME_ATTACK_H = 1.0 / TIME_PER_ACTION_ATTACK_H
 
 FRAMES_PER_ACTION_RUN = 3
 FRAMES_PER_ACTION_IDLE = 3
+FRAMES_PER_ACTION_ATTACK = 3
 
 
 
@@ -153,7 +154,7 @@ class Normal_Attack:
         pass
 
     def do(self):
-        self.ryu.frame += FRAMES_PER_ACTION_RUN * ACTION_PER_TIME * game_framework.frame_time
+        self.ryu.frame += FRAMES_PER_ACTION_ATTACK * self.action_per_time * game_framework.frame_time
 
         if int(self.ryu.frame) >= len(self.attack_frames[self.attack_type]):
             self.ryu.state_machine.handle_state_event(('END_ATTACK', None))
