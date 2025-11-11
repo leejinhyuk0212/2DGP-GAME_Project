@@ -124,37 +124,27 @@ class Normal_Attack:
     def __init__(self, ryu):
         self.ryu = ryu
         self.attack_frames = {
-            'P_L': [
-                (8, 800, 61, 92),
-                (80, 800, 75, 92),
-            ],
-            'P_H': [
-                (272, 800, 55, 92),
-                (336, 800, 47, 92),
-                (168, 800, 95, 89),
-            ]
+            'P_L': [(8,800,61,92),(80,800,75,92)],
+            'P_H': [(272,800,55,92),(336,800,47,92),(168,800,95,89)],
         }
         self.attack_type = None
         self.frame = 0.0
-        self.action_per_time = 1.0
 
     def enter(self, e):
         self.ryu.frame = 0.0
-        self.start_time = get_time()
         sdl = e[1]
         if sdl and sdl.type == SDL_KEYDOWN:
             if sdl.key == SDLK_k:
                 self.attack_type = 'P_L'
-                self.action_per_time = ACTION_PER_TIME_ATTACK_L
             elif sdl.key == SDLK_l:
                 self.attack_type = 'P_H'
-                self.action_per_time = ACTION_PER_TIME_ATTACK_H
-
     def exit(self, e):
         pass
 
     def do(self):
-        self.ryu.frame += FRAMES_PER_ACTION_ATTACK * self.action_per_time * game_framework.frame_time
+        self.ryu.frame += FRAMES_PER_ACTION_ATTACK * ACTION_PER_TIME_ATTACK_L * game_framework.frame_time \
+                          if self.attack_type == 'P_L' else \
+                          FRAMES_PER_ACTION_ATTACK * ACTION_PER_TIME_ATTACK_H * game_framework.frame_time
 
         if int(self.ryu.frame) >= len(self.attack_frames[self.attack_type]):
             self.ryu.state_machine.handle_state_event(('END_ATTACK', None))
@@ -163,13 +153,22 @@ class Normal_Attack:
         idx = min(int(self.ryu.frame), len(self.attack_frames[self.attack_type]) - 1)
         sx, sy, sw, sh = self.attack_frames[self.attack_type][idx]
 
+        # 매번 첫 프레임을 기준으로 비교
+        _, _, base_w, base_h = self.attack_frames[self.attack_type][0]
+
         if self.ryu.face_dir == 1:
-            self.ryu.image.clip_draw(sx, sy, sw, sh, self.ryu.x, self.ryu.y)
+            dx = (sw - base_w) * 0.5
         else:
-            self.ryu.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h',
-                                               self.ryu.x, self.ryu.y, sw, sh)
+            dx = -(sw - base_w) * 0.5
+        dy = (sh - base_h) * 0.5
 
+        draw_x = self.ryu.x + dx
+        draw_y = self.ryu.y + dy
 
+        if self.ryu.state == 'left':
+            self.ryu.image.clip_draw(sx, sy, sw, sh, draw_x, draw_y)
+        else:
+            self.ryu.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h', draw_x, draw_y, sw, sh)
 
 
 class Ryu:
