@@ -3,7 +3,13 @@ from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDLK_RIGHT, SDL_KEYUP, SDLK_LEFT
 
 import game_framework
 from state_machine import StateMachine
-import time
+
+PIXEL_PER_METER = (10.0/0.3)
+RUN_SPEED_KMPH = 20.0
+RUN_SPEED_MPM = (RUN_SPEED_KMPH * 1000.0 / 60.0)
+RUN_SPEED_MPS = (RUN_SPEED_MPM / 60.0)
+RUN_SPEED_PPS = (RUN_SPEED_MPS * PIXEL_PER_METER)
+
 
 TIME_PER_ACTION = 0.5
 FRAMES_PER_ACTION_IDLE = 3
@@ -92,8 +98,7 @@ class Run:
 
     def do(self):
         self.ryu.frame = (self.ryu.frame + FRAMES_PER_ACTION_RUN * ACTION_PER_TIME * game_framework.frame_time) % FRAMES_PER_ACTION_RUN
-        # 이동
-        self.ryu.x += self.ryu.dir * 5
+        self.ryu.x += self.ryu.dir * RUN_SPEED_PPS * game_framework.frame_time
 
     def draw(self):
         idx = int(self.ryu.frame)
