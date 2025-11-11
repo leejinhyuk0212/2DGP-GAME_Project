@@ -53,15 +53,10 @@ def end_attack(e):
 
 
 
-
 class Idle:
     def __init__(self, ryu):
         self.ryu = ryu
-        self.idle_quads = [
-            (328, 1096, 46, 92),  # 7
-            (384, 1096, 63, 90),  # 8
-            (456, 1096, 55, 91),  # 9
-        ]
+        self.idle_stand = (328, 1096, 46, 92)
 
     def enter(self, e):
         self.ryu.wait_time = get_time()
@@ -72,20 +67,19 @@ class Idle:
         pass
 
     def do(self):
-        self.ryu.frame = (self.ryu.frame + FRAMES_PER_ACTION_IDLE * ACTION_PER_TIME * game_framework.frame_time) % 3  # 0,1,2 순환
-        self.ryu.idle_frames = [6, 7, 8]
-        if get_time() - self.ryu.wait_time > 3:
-            self.ryu.state_machine.handle_state_event(('TIMEOUT', None))
+        pass
 
     def draw(self):
-        idx = int(self.ryu.frame)
-        sx, sy, sw, sh = self.idle_quads[idx]
+        sx, sy, sw, sh = self.idle_stand
 
-        if self.ryu.state == 'left':
+        if self.ryu.face_dir == 1:
             self.ryu.image.clip_draw(sx, sy, sw, sh, self.ryu.x, self.ryu.y)
-        else:  # 왼쪽
-            self.ryu.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h',
-                                               self.ryu.x, self.ryu.y, sw, sh)
+        else:
+            self.ryu.image.clip_composite_draw(
+                sx, sy, sw, sh, 0, 'h',
+                self.ryu.x, self.ryu.y, sw, sh
+            )
+
 
 class Run:
     def __init__(self, ryu):
