@@ -1,5 +1,5 @@
 from pico2d import load_image, get_time
-from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDLK_RIGHT, SDL_KEYUP, SDLK_LEFT, SDLK_k, SDLK_l
+from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDLK_RIGHT, SDL_KEYUP, SDLK_LEFT, SDLK_k, SDLK_l, SDLK_DOWN
 
 import game_framework
 from state_machine import StateMachine
@@ -20,7 +20,7 @@ ACTION_PER_TIME_ATTACK_H = 1.0 / TIME_PER_ACTION_ATTACK_H
 FRAMES_PER_ACTION_RUN = 3
 FRAMES_PER_ACTION_IDLE = 3
 FRAMES_PER_ACTION_ATTACK = 3
-
+FRAMES_PER_ACTION_SIT = 2
 
 
 def space_down(e): # e is space down ?
@@ -52,6 +52,12 @@ def l_down(e):
 def end_attack(e):
     return e[0] == 'END_ATTACK'
 
+def down_down(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_DOWN
+
+def down_up(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_DOWN
+
 
 
 class Idle:
@@ -73,7 +79,7 @@ class Idle:
     def draw(self):
         sx, sy, sw, sh = self.idle_stand
 
-        if self.ryu.face_dir == 1:
+        if self.ryu.state == 'left':
             self.ryu.image.clip_draw(sx, sy, sw, sh, self.ryu.x, self.ryu.y)
         else:
             self.ryu.image.clip_composite_draw(
@@ -170,6 +176,50 @@ class Normal_Attack:
         else:
             self.ryu.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h', draw_x, draw_y, sw, sh)
 
+from sdl2 import SDL_KEYDOWN, SDL_KEYUP, SDLK_DOWN
+from pico2d import get_time
+
+# 이벤트 프레디케이트
+def down_down(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_DOWN
+
+def down_up(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_DOWN
+
+
+class Sit:
+    def __init__(self, ryu):
+        self.ryu = ryu
+        self.quads = [
+            (  8, 904, 45, 70),
+            ( 64, 904, 47, 70),
+        ]
+        self.lock_delay = 0.08
+        self.t0 = 0.0
+
+    def enter(self, e):
+        self.ryu.dir = 0
+        self.t0 = get_time()
+
+    def exit(self, e):
+        pass
+
+    def do(self):
+        pass
+
+    def draw(self):
+        idx = 0 if (get_time() - self.t0) < self.lock_delay else 1
+        sx, sy, sw, sh = self.quads[idx]
+
+        STAND_H = 92
+        draw_y = (self.ryu.y - STAND_H * 0.5) + sh * 0.5
+
+        if self.ryu.state == 'left':
+            self.ryu.image.clip_draw(sx, sy, sw, sh, self.ryu.x, draw_y)
+        else:
+            self.ryu.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h', self.ryu.x, draw_y, sw, sh)
+
+
 
 class Ryu:
     def __init__(self):
@@ -183,6 +233,7 @@ class Ryu:
         self.IDLE = Idle(self)
         self.RUN = Run(self)
         self.ATTACK = Normal_Attack(self)
+        self.SIT = Sit(self)
 
         self.state_machine = StateMachine(
             self.IDLE,
@@ -192,13 +243,17 @@ class Ryu:
                     right_up: self.RUN, left_up: self.RUN,
                     k_down: self.ATTACK,  # 약손 입력 → 공격 상태 전환
                     l_down: self.ATTACK,  # 강손 입력 → 공격 상태 전환
+                    down_down: self.SIT,
                 },
                 self.RUN: {
-                    right_up: self.IDLE, left_up: self.IDLE
+                    right_up: self.IDLE, left_up: self.IDLE, down_down: self.SIT,
                 },
                 self.ATTACK: {
                     end_attack: self.IDLE
-                }
+                },
+                self.SIT: {
+                    down_up: self.IDLE,  # ↓ 떼면 다시 서기
+                },
             }
         )
 
