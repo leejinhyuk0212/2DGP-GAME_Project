@@ -1,10 +1,12 @@
 from pico2d import load_image, get_time
-from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDLK_RIGHT, SDL_KEYUP, SDLK_LEFT, SDLK_k, SDLK_l, SDL_KEYUP, SDLK_DOWN, SDLK_COMMA, SDLK_PERIOD
+from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDLK_RIGHT, SDL_KEYUP, SDLK_LEFT, SDLK_k, SDLK_l, SDL_KEYUP, SDLK_DOWN, SDLK_COMMA, SDLK_PERIOD, SDLK_UP
 
 import game_framework
 from state_machine import StateMachine
 
 PIXEL_PER_METER = (10.0/0.3)
+JUMP_SPEED = 7.0
+GRAVITY = 20.0
 RUN_SPEED_KMPH = 20.0
 RUN_SPEED_MPM = (RUN_SPEED_KMPH * 1000.0 / 60.0)
 RUN_SPEED_MPS = (RUN_SPEED_MPM / 60.0)
@@ -21,6 +23,9 @@ FRAMES_PER_ACTION_RUN = 3
 FRAMES_PER_ACTION_IDLE = 3
 FRAMES_PER_ACTION_ATTACK = 3
 FRAMES_PER_ACTION_SIT = 2
+
+
+JUMP_ANIM_DURATION = 0.45
 
 time_out = lambda e: e[0] == 'TIMEOUT'
 
@@ -59,6 +64,12 @@ def comma_down(e):
 
 def period_down(e):
     return e[0]=='INPUT' and e[1].type==SDL_KEYDOWN and e[1].key==SDLK_PERIOD
+
+def up_down(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_UP
+
+def land(e):
+    return e[0] == 'LAND'
 
 
 
@@ -224,6 +235,43 @@ class Sit:
             self.ryu.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h', self.ryu.x, draw_y, sw, sh)
 
 
+class Jump:
+    def __init__(self, ryu):
+        self.ryu = ryu
+        self.jump_quads = [
+            (50, 1000, 48, 90),
+            (100, 1000, 52, 92),
+        ]
+        self.yv = 0.0
+        self.ground_y = 0.0
+        self.frame = 0.0
+
+    def enter(self, e):
+        self.ground_y = self.ryu.y
+        self.yv = JUMP_SPEED
+        self.frame = 0.0
+        self.ryu.dir = 0
+
+    def exit(self, e):
+        pass
+
+    def do(self):
+        self.yv -= GRAVITY * game_framework.frame_time
+        self.ryu.y += self.yv * game_framework.frame_time * PIXEL_PER_METER
+
+        self.frame = (self.frame + 2 * game_framework.frame_time) % 2
+
+    def draw(self):
+        idx = int(self.frame)
+        sx, sy, sw, sh = self.jump_quads[idx]
+
+        if self.ryu.face_dir == 1:
+            self.ryu.image.clip_draw(sx, sy, sw, sh, self.ryu.x, self.ryu.y)
+        else:
+            self.ryu.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h',
+                                               self.ryu.x, self.ryu.y, sw, sh)
+
+
 
 class Ryu:
     def __init__(self):
@@ -238,6 +286,7 @@ class Ryu:
         self.RUN = Run(self)
         self.ATTACK = Normal_Attack(self)
         self.SIT = Sit(self)
+        self.JUMP = Jump(self)
 
         self.state_machine = StateMachine(
             self.IDLE,
@@ -250,6 +299,7 @@ class Ryu:
                     comma_down: self.ATTACK,
                     period_down: self.ATTACK,
                     down_down: self.SIT,
+                    up_down: self.JUMP,
                 },
                 self.RUN: {
                     right_up: self.IDLE, left_up: self.IDLE,
@@ -257,12 +307,16 @@ class Ryu:
                     l_down: self.ATTACK,
                     comma_down: self.ATTACK,
                     period_down: self.ATTACK,
+                    up_down: self.JUMP
                 },
                 self.ATTACK: {
                     end_attack: self.IDLE
                 },
                 self.SIT: {
                     down_up: self.IDLE,  # ↓ 떼면 다시 서기
+                },
+                self.JUMP: {
+                    land: self.IDLE,  # 착지하면 Idle로
                 },
             }
         )
