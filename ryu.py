@@ -288,6 +288,7 @@ class Ryu:
         self.dir = 0
         self.state = 'left'
         self.image = load_image('Ch_Ryu.png')
+        self._camera = None
 
         self.IDLE = Idle(self)
         self.RUN = Run(self)
@@ -331,8 +332,13 @@ class Ryu:
     def update(self):
         self.state_machine.update()
 
+    def set_camera(self, map_obj):
+        self._camera = map_obj
+
     def handle_event(self, event):
         self.state_machine.handle_state_event(('INPUT', event))
 
     def draw(self):
-        self.state_machine.draw()
+        cam_x = self._camera.get_camera_x() if self._camera else 0
+        draw_x = self.x - cam_x
+        self.state_machine.draw_at(draw_x, self.y)

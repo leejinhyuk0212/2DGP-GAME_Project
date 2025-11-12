@@ -25,3 +25,8 @@ class StateMachine:
     def draw(self):
         self.cur_state.draw()
 
+    def draw_at(self, x, y):
+        if hasattr(self.cur_state, 'draw_at'):
+            self.cur_state.draw_at(x, y)
+        else:
+            self.cur_state.draw()

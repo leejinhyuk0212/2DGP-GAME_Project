@@ -3,6 +3,7 @@ import game_framework
 import select_mode
 import game_world
 from ryu import Ryu
+from map import Map1
 
 def handle_events():
     event_list = get_events()
@@ -16,8 +17,14 @@ def handle_events():
 
 def init():
     global ryu
+    global map
     ryu=Ryu()
+    map=Map1()
+    map.set_target(ryu)
+    ryu.set_camera(map)
+
     game_world.add_object(ryu, 1)
+    game_world.add_object(map, 0)
 
 def finish():
     pass
