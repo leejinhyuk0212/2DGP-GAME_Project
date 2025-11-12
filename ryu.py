@@ -5,8 +5,8 @@ import game_framework
 from state_machine import StateMachine
 
 PIXEL_PER_METER = (10.0/0.3)
-JUMP_SPEED = 15.0
-GRAVITY = 20.0
+JUMP_SPEED = 20.0
+GRAVITY = 50.0
 RUN_SPEED_KMPH = 20.0
 RUN_SPEED_MPM = (RUN_SPEED_KMPH * 1000.0 / 60.0)
 RUN_SPEED_MPS = (RUN_SPEED_MPM / 60.0)
@@ -146,15 +146,15 @@ class Normal_Attack:
             'P_L': [(8,800,61,92),(80,800,75,92)],
             'P_H': [(272,800,55,92),(336,800,47,92),(168,800,95,89)],
             'K_L': [  # 약킥: 4번째 줄 맨오른쪽 -> 5번째 줄 1번
-        (456, 800, 48, 91),  # row4 idx7
-        (  8, 696, 89, 84),  # row5 idx1
+        (456, 800, 48, 95),  # row4 idx7
+        (  8, 696, 89, 90),  # row5 idx1
     ],
         'K_H': [
-        (392, 696, 40, 87),  # row5 idx6
-        (320, 696, 59, 87),
-        (104, 696, 87, 83),
-        (264, 696, 47, 87),
-        (200, 696, 54, 87),
+        (392, 696, 42, 100),  # row5 idx6
+        (320, 696, 61, 100),
+        (104, 696, 89, 100),
+        (264, 696, 49, 100),
+        (200, 696, 56, 100),
     ],
         }
         self.attack_type = None
@@ -239,8 +239,8 @@ class Jump:
     def __init__(self, ryu):
         self.ryu = ryu
         self.jump_quads = [
-            (50, 1000, 48, 90),
-            (100, 1000, 52, 92),
+            (50, 990, 48, 100),
+            (100, 990, 45, 70),
         ]
         self.yv = 0.0
         self.ground_y = 0.0
@@ -269,12 +269,15 @@ class Jump:
         idx = int(self.frame)
         sx, sy, sw, sh = self.jump_quads[idx]
 
-        if self.ryu.face_dir == 1:
-            self.ryu.image.clip_draw(sx, sy, sw, sh, self.ryu.x, self.ryu.y)
+        STAND_H = 92
+        head_anchor_y = self.ryu.y + STAND_H * 0.5
+        draw_y = head_anchor_y - sh * 0.5
+
+        if self.ryu.state == 'left':
+            self.ryu.image.clip_draw(sx, sy, sw, sh, self.ryu.x, draw_y)
         else:
             self.ryu.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h',
-                                               self.ryu.x, self.ryu.y, sw, sh)
-
+                                               self.ryu.x, draw_y, sw, sh)
 
 
 class Ryu:
