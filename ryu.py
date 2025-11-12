@@ -216,7 +216,7 @@ class Crouch_Attack:
 
     def enter(self, e):
         self.ryu.dir = 0
-        self.frame = 0.0
+        self.ryu.frame = 0.0
         sdl = e[1]
         if sdl and sdl.type == SDL_KEYDOWN:
             if sdl.key == SDLK_k:
@@ -385,7 +385,11 @@ class Ryu:
                     down_up: self.IDLE,
                 },
                 self.CROUCH_ATTACK: {
-                    end_attack: self.SIT
+                    k_down: self.CROUCH_ATTACK,
+                    l_down: self.CROUCH_ATTACK,
+                    comma_down: self.CROUCH_ATTACK,
+                    period_down: self.CROUCH_ATTACK,
+                    end_attack: self.SIT,
                 },
                 self.JUMP: {
                     land: self.IDLE,  # 착지하면 Idle로
