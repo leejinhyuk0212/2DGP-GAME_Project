@@ -15,9 +15,13 @@ RUN_SPEED_PPS = (RUN_SPEED_MPS * PIXEL_PER_METER)
 TIME_PER_ACTION = 0.5
 ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
 TIME_PER_ACTION_ATTACK_L = 0.2   # 약공(빠름)
-TIME_PER_ACTION_ATTACK_H = 0.35    # 강공(느림)
+TIME_PER_ACTION_ATTACK_H = 0.7    # 강공(느림)
 ACTION_PER_TIME_ATTACK_L = 1.0 / TIME_PER_ACTION_ATTACK_L
 ACTION_PER_TIME_ATTACK_H = 1.0 / TIME_PER_ACTION_ATTACK_H
+TIME_PER_ACTION_ATTACK_COMMA = 0.5   # 약공(빠름)
+TIME_PER_ACTION_ATTACK_PERIOD = 0.5    # 강공(느림)
+ACTION_PER_TIME_ATTACK_COMMA = 1.0 / TIME_PER_ACTION_ATTACK_COMMA
+ACTION_PER_TIME_ATTACK_PERIOD = 1.0 / TIME_PER_ACTION_ATTACK_PERIOD
 
 FRAMES_PER_ACTION_RUN = 3
 FRAMES_PER_ACTION_IDLE = 3
@@ -145,17 +149,8 @@ class Normal_Attack:
         self.attack_frames = {
             'P_L': [(8,800,61,92),(80,800,75,92)],
             'P_H': [(272,800,55,92),(336,800,47,92),(168,800,95,89)],
-            'K_L': [  # 약킥: 4번째 줄 맨오른쪽 -> 5번째 줄 1번
-        (456, 800, 48, 95),  # row4 idx7
-        (  8, 696, 89, 90),  # row5 idx1
-    ],
-        'K_H': [
-        (392, 696, 42, 100),  # row5 idx6
-        (320, 696, 61, 100),
-        (104, 696, 89, 100),
-        (264, 696, 49, 100),
-        (200, 696, 56, 100),
-    ],
+            'K_L': [(456, 800, 48, 95),(  8, 696, 89, 90),],
+        'K_H': [(392, 696, 42, 100),(320, 696, 61, 100),(104, 696, 89, 100),(264, 696, 49, 100),(200, 696, 56, 100),],
         }
         self.attack_type = None
         self.frame = 0.0
@@ -173,10 +168,10 @@ class Normal_Attack:
                 self.action_per_time = ACTION_PER_TIME_ATTACK_H
             elif sdl.key == SDLK_COMMA:
                 self.attack_type = 'K_L'
-                self.action_per_time = ACTION_PER_TIME_ATTACK_L
+                self.action_per_time = ACTION_PER_TIME_ATTACK_COMMA
             elif sdl.key == SDLK_PERIOD:
                 self.attack_type = 'K_H'
-                self.action_per_time = ACTION_PER_TIME_ATTACK_H
+                self.action_per_time = ACTION_PER_TIME_ATTACK_PERIOD
     def exit(self, e):
         pass
 
@@ -201,6 +196,56 @@ class Normal_Attack:
             self.ryu.image.clip_draw(sx, sy, sw, sh, draw_x, draw_y)
         else:
             self.ryu.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h', draw_x, draw_y, sw, sh)
+
+class Crouch_Attack:
+    def __init__(self, ryu):
+        self.ryu = ryu
+        self.attack_frames = {
+            'P_L': [(8,800,61,92),(80,800,75,92)],
+            'P_H': [(272,800,55,92),(336,800,47,92),(168,800,95,89)],
+            'K_L': [(456,800,48,95),(8,696,89,90)],
+            'K_H': [(392,696,42,100),(320,696,61,100),(104,696,89,100),(264,696,49,100),(200,696,56,100)],
+        }
+        self.attack_type = None
+        self.action_per_time = 1.0
+        self.frame = 0.0
+        self.STAND_H = 92
+        self.SIT_H   = 70
+
+    def enter(self, e):
+        self.ryu.dir = 0
+        self.frame = 0.0
+        sdl = e[1]
+        if sdl and sdl.type == SDL_KEYDOWN:
+            if sdl.key == SDLK_k:
+                self.attack_type = 'P_L'
+                self.action_per_time = ACTION_PER_TIME_ATTACK_L
+            elif sdl.key == SDLK_l:
+                self.attack_type = 'P_H'
+                self.action_per_time = ACTION_PER_TIME_ATTACK_H
+            elif sdl.key == SDLK_COMMA:
+                self.attack_type = 'K_L'
+                self.action_per_time = ACTION_PER_TIME_ATTACK_COMMA
+            elif sdl.key == SDLK_PERIOD:
+                self.attack_type = 'K_H'
+                self.action_per_time = ACTION_PER_TIME_ATTACK_PERIOD
+
+    def exit(self, e): pass
+
+    def do(self):
+        self.ryu.frame += FRAMES_PER_ACTION_ATTACK * self.action_per_time * game_framework.frame_time
+        if int(self.ryu.frame) >= len(self.attack_frames[self.attack_type]):
+            self.ryu.state_machine.handle_state_event(('END_ATTACK', None))
+
+    def draw(self):
+        idx = int(self.ryu.frame) % len(self.attack_frames[self.attack_type])
+        sx, sy, sw, sh = self.attack_frames[self.attack_type][idx]
+
+
+        if self.ryu.state == 'left':
+            self.ryu.image.clip_draw(sx, sy, sw, sh, self.ryu.x, self.ryu.y)
+        else:
+            self.ryu.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h', self.ryu.x, self.ryu.y, sw, sh)
 
 class Sit:
     def __init__(self, ryu):
@@ -295,6 +340,8 @@ class Ryu:
         self.ATTACK = Normal_Attack(self)
         self.SIT = Sit(self)
         self.JUMP = Jump(self)
+        self.CROUCH_ATTACK = Crouch_Attack(self)
+
 
         self.state_machine = StateMachine(
             self.IDLE,
@@ -321,7 +368,14 @@ class Ryu:
                     end_attack: self.IDLE
                 },
                 self.SIT: {
-                    down_up: self.IDLE,  # ↓ 떼면 다시 서기
+                    k_down: self.CROUCH_ATTACK,
+                    l_down: self.CROUCH_ATTACK,
+                    comma_down: self.CROUCH_ATTACK,
+                    period_down: self.CROUCH_ATTACK,
+                    down_up: self.IDLE,
+                },
+                self.CROUCH_ATTACK: {
+                    end_attack: self.SIT
                 },
                 self.JUMP: {
                     land: self.IDLE,  # 착지하면 Idle로
