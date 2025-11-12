@@ -119,10 +119,12 @@ class Run:
         ]
 
     def enter(self, e):
-        if right_down(e) or left_up(e):
+        if right_down(e):
             self.ryu.dir = self.ryu.face_dir = 1
-        elif left_down(e) or right_up(e):
+        elif left_down(e):
             self.ryu.dir = self.ryu.face_dir = -1
+        elif right_up(e) or left_up(e):
+            self.ryu.dir = self.ryu.face_dir = 0
         self.ryu.frame = 0.0
 
     def exit(self, e):
