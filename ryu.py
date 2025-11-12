@@ -5,7 +5,7 @@ import game_framework
 from state_machine import StateMachine
 
 PIXEL_PER_METER = (10.0/0.3)
-JUMP_SPEED = 7.0
+JUMP_SPEED = 15.0
 GRAVITY = 20.0
 RUN_SPEED_KMPH = 20.0
 RUN_SPEED_MPM = (RUN_SPEED_KMPH * 1000.0 / 60.0)
@@ -260,6 +260,10 @@ class Jump:
         self.ryu.y += self.yv * game_framework.frame_time * PIXEL_PER_METER
 
         self.frame = (self.frame + 2 * game_framework.frame_time) % 2
+
+        if self.ryu.y <= self.ground_y:
+            self.ryu.y = self.ground_y
+            self.ryu.state_machine.handle_state_event(('LAND', None))
 
     def draw(self):
         idx = int(self.frame)
