@@ -260,30 +260,24 @@ class Jump_Attack:
     """점프 중 공격: 공중에서 공격 애니 돌리고, 착지하면 Idle."""
     def __init__(self, ryu):
         self.ryu = ryu
-        # ↙ 필요하면 전용 프레임으로 바꿔도 됨. 우선 Normal_Attack과 동일 세트 재사용
         self.attack_frames = {
-            'P_L': [(8,800,61,92),(80,800,75,92)],
-            'P_H': [(272,800,55,92),(336,800,47,92),(168,800,95,89)],
-            'K_L': [(456,800,48,95),(8,696,89,90)],
-            'K_H': [(392,696,42,100),(320,696,61,100),(104,696,89,100),(264,696,49,100),(200,696,56,100)],
+            'P_L': [(424, 624, 69, 63)],
+            'P_H': [(248, 624, 78, 64), (336, 624, 74, 63)],
+            'K_L': [(320, 984, 45, 87),(365, 984, 75, 88)],
+            'K_H': [(5, 288, 82, 100),(90, 280, 95, 110), (248, 275, 75, 110),(183, 275, 60, 120)]
         }
         self.attack_type = None
         self.action_per_time = 1.0
         self.frame = 0.0
-        # 공중 물리
         self.yv = 0.0
         self.ground_y = 0.0
 
     def enter(self, e):
-        # 점프 상태 물리 이어받기
         self.yv = self.ryu.JUMP.yv
         self.ground_y = self.ryu.JUMP.ground_y
         self.ryu.dir = 0
         self.ryu.frame = 0.0
 
-        # 기본: 약펀치
-        self.attack_type = 'P_L'
-        self.action_per_time = ACTION_PER_TIME_ATTACK_L
 
         sdl = e[1] if e and len(e) > 1 else None
         if sdl and sdl.type == SDL_KEYDOWN:
@@ -300,17 +294,13 @@ class Jump_Attack:
         pass
 
     def do(self):
-        # 공격 애니 진행
         self.ryu.frame += FRAMES_PER_ACTION_ATTACK * self.action_per_time * game_framework.frame_time
-        # 애니 끝나면 마지막 프레임 유지(공중에선 계속 떠 있음)
         if int(self.ryu.frame) >= len(self.attack_frames[self.attack_type]):
             self.ryu.frame = len(self.attack_frames[self.attack_type]) - 1
 
-        # 중력 적용 + 위치 업데이트
         self.yv -= GRAVITY * game_framework.frame_time
         self.ryu.y += self.yv * game_framework.frame_time * PIXEL_PER_METER
 
-        # 착지 체크 → Idle
         if self.ryu.y <= self.ground_y:
             self.ryu.y = self.ground_y
             self.ryu.state_machine.handle_state_event(('LAND', None))
@@ -319,7 +309,6 @@ class Jump_Attack:
         idx = min(int(self.ryu.frame), len(self.attack_frames[self.attack_type]) - 1)
         sx, sy, sw, sh = self.attack_frames[self.attack_type][idx]
 
-        # 전방 엣지 고정(폭 보정) + 발 기준 y 고정
         base_w = self.attack_frames[self.attack_type][0][2]
         dx = ((sw - base_w) * 0.5) * self.ryu.face_dir
 
