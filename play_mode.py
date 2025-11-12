@@ -4,6 +4,7 @@ import select_mode
 import game_world
 from ryu import Ryu
 from map import Map1
+from countdown import CountdownSprite
 
 def handle_events():
     event_list = get_events()
@@ -16,29 +17,31 @@ def handle_events():
             ryu.handle_event(event)
 
 def init():
-    global ryu
-    global map
-    ryu=Ryu()
-    map=Map1()
+    global ryu, map, countdown
+    ryu = Ryu()
+    map = Map1()
     map.set_target(ryu)
     ryu.set_camera(map)
 
-    game_world.add_object(ryu, 1)
     game_world.add_object(map, 0)
+    game_world.add_object(ryu, 1)
+
+    countdown = CountdownSprite()
 
 def finish():
     pass
 
 def update():
+    global countdown
+    frame_time = game_framework.frame_time
+    countdown.update(frame_time)
     game_world.update()
-
 
 def draw():
     clear_canvas()
     game_world.render()
+    countdown.draw()
     update_canvas()
-
-
 
 def pause():
     pass
