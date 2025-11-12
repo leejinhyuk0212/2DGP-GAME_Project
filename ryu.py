@@ -259,7 +259,6 @@ class Crouch_Attack:
                                                draw_x, draw_y, sw, sh)
 
 class Jump_Attack:
-    """점프 중 공격: 공중에서 공격 애니 돌리고, 착지하면 Idle."""
     def __init__(self, ryu):
         self.ryu = ryu
         self.attack_frames = {
@@ -421,6 +420,7 @@ class Jump_Diag:
         self.vx = dir_sign * RUN_SPEED_PPS
         self.frame = 0.0
         self.ryu.air_yv = self.yv
+        self.ryu.air_vx = self.vx
         self.ryu.air_ground_y = self.ground_y
 
     def exit(self, e):
@@ -451,6 +451,89 @@ class Jump_Diag:
             self.ryu.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h',
                                                self.ryu.x, draw_y, sw, sh)
 
+class Jump_Diag_Attack:
+    """대각 점프 중 공격: 공중에서 애니 진행, 가로/세로 속도 적용, 착지 시 Idle."""
+    def __init__(self, ryu):
+        self.ryu = ryu
+        self.attack_frames = {
+            'P_L': [(424, 624, 69, 63)],
+            'P_H': [(248, 624, 78, 64), (336, 624, 74, 63)],
+            'K_L': [(320, 984, 45, 87), (365, 984, 75, 88)],
+            'K_H': [(5, 288, 82, 100), (90, 280, 95, 110),
+                    (248, 275, 75, 110), (183, 275, 60, 120)]
+        }
+        self.attack_type = None
+        self.action_per_time = 1.0
+        self.frame = 0.0
+        self.yv = 0.0
+        self.vx = 0.0
+        self.ground_y = 0.0
+
+    def enter(self, e):
+        # Jump_Diag에서 저장해둔 공중 상태가 있으면 재사용
+        self.yv = getattr(self.ryu, 'air_yv', JUMP_SPEED)
+        self.ground_y = getattr(self.ryu, 'air_ground_y', self.ryu.y)
+
+        # 대각 점프와 같은 가로 속도 부여(방향키로 정해진 진행방향 사용)
+        dir_sign = self.ryu.dir if self.ryu.dir != 0 else (1 if self.ryu.face_dir == 1 else -1)
+        self.vx = dir_sign * RUN_SPEED_PPS
+
+        self.ryu.dir = 0
+        self.ryu.frame = 0.0
+        self.frame = 0.0
+
+        # 어떤 공격인지 결정 (+ 속도)
+        sdl = e[1] if e and len(e) > 1 else None
+        if sdl and sdl.type == SDL_KEYDOWN:
+            if sdl.key == SDLK_k:
+                self.attack_type = 'P_L'; self.action_per_time = ACTION_PER_TIME_ATTACK_L
+            elif sdl.key == SDLK_l:
+                self.attack_type = 'P_H'; self.action_per_time = ACTION_PER_TIME_ATTACK_H
+            elif sdl.key == SDLK_COMMA:
+                self.attack_type = 'K_L'; self.action_per_time = ACTION_PER_TIME_ATTACK_COMMA
+            elif sdl.key == SDLK_PERIOD:
+                self.attack_type = 'K_H'; self.action_per_time = ACTION_PER_TIME_ATTACK_PERIOD
+        if self.attack_type is None:
+            self.attack_type = 'P_L'
+
+    def exit(self, e):
+        pass
+
+    def do(self):
+        # 애니메이션 진행(끝 프레임에서 고정)
+        self.ryu.frame += FRAMES_PER_ACTION_ATTACK * self.action_per_time * game_framework.frame_time
+        if int(self.ryu.frame) >= len(self.attack_frames[self.attack_type]):
+            self.ryu.frame = len(self.attack_frames[self.attack_type]) - 1
+
+        # 공중 물리: 세로/가로 이동
+        self.yv -= GRAVITY * game_framework.frame_time
+        self.ryu.y += self.yv * game_framework.frame_time * PIXEL_PER_METER
+        self.ryu.x += self.vx * game_framework.frame_time
+
+        # 착지 처리
+        if self.ryu.y <= self.ground_y:
+            self.ryu.y = self.ground_y
+            self.ryu.state_machine.handle_state_event(('LAND', None))
+
+    def draw(self):
+        idx = min(int(self.ryu.frame), len(self.attack_frames[self.attack_type]) - 1)
+        sx, sy, sw, sh = self.attack_frames[self.attack_type][idx]
+
+        # 좌하단(발) 기준 고정: 폭/높이 변화 보정
+        base_w = self.attack_frames[self.attack_type][0][2]
+        dx = ((sw - base_w) * 0.5) * self.ryu.face_dir
+
+        STAND_H = 92
+        draw_x = self.ryu.x + dx
+        draw_y = (self.ryu.y - STAND_H * 0.5) + sh * 0.5
+
+        if self.ryu.state == 'left':
+            self.ryu.image.clip_draw(sx, sy, sw, sh, draw_x, draw_y)
+        else:
+            self.ryu.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h', draw_x, draw_y, sw, sh)
+
+
+
 
 class Ryu:
     def __init__(self):
@@ -470,6 +553,7 @@ class Ryu:
         self.CROUCH_ATTACK = Crouch_Attack(self)
         self.JUMP_ATTACK = Jump_Attack(self)
         self.JUMP_DIAG = Jump_Diag(self)
+        self.JUMP_DIAG_ATTACK = Jump_Diag_Attack(self)
 
 
         self.state_machine = StateMachine(
@@ -518,10 +602,17 @@ class Ryu:
                     land: self.IDLE,
                 },
                 self.JUMP_DIAG: {
-                    k_down: self.JUMP_ATTACK,
-                    l_down: self.JUMP_ATTACK,
-                    comma_down: self.JUMP_ATTACK,
-                    period_down: self.JUMP_ATTACK,
+                    k_down: self.JUMP_DIAG_ATTACK,
+                    l_down: self.JUMP_DIAG_ATTACK,
+                    comma_down: self.JUMP_DIAG_ATTACK,
+                    period_down: self.JUMP_DIAG_ATTACK,
+                    land: self.IDLE,
+                },
+                self.JUMP_DIAG_ATTACK: {
+                    k_down: self.JUMP_DIAG_ATTACK,
+                    l_down: self.JUMP_DIAG_ATTACK,
+                    comma_down: self.JUMP_DIAG_ATTACK,
+                    period_down: self.JUMP_DIAG_ATTACK,
                     land: self.IDLE,
                 },
                 self.JUMP_ATTACK: {
