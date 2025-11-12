@@ -14,7 +14,7 @@ def handle_events():
             game_framework.quit()
         elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
             game_framework.change_mode(select_mode)
-        else:
+        elif not round_fight.visible:  # ✅ 연출 중 아닐 때만 입력 전달
             ryu.handle_event(event)
 
 def init():
@@ -38,6 +38,9 @@ def update():
     frame_time = game_framework.frame_time
     round_fight.update(frame_time)
     countdown.update(frame_time)
+
+    if not round_fight.visible:
+        game_world.update()
     game_world.update()
 
 def draw():

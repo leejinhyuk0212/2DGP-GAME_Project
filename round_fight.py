@@ -50,3 +50,6 @@ class RoundFightOverlay:
         self.acc = 0.0
         self.visible = True
         self.done = False
+
+    def should_freeze(self):
+        return self.visible
