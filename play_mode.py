@@ -5,6 +5,7 @@ import game_world
 from ryu import Ryu
 from map import Map1
 from countdown import CountdownSprite
+from round_fight import RoundFightOverlay
 
 def handle_events():
     event_list = get_events()
@@ -17,7 +18,7 @@ def handle_events():
             ryu.handle_event(event)
 
 def init():
-    global ryu, map, countdown
+    global ryu, map, countdown, round_fight
     ryu = Ryu()
     map = Map1()
     map.set_target(ryu)
@@ -26,6 +27,7 @@ def init():
     game_world.add_object(map, 0)
     game_world.add_object(ryu, 1)
 
+    round_fight = RoundFightOverlay()
     countdown = CountdownSprite()
 
 def finish():
@@ -34,12 +36,14 @@ def finish():
 def update():
     global countdown
     frame_time = game_framework.frame_time
+    round_fight.update(frame_time)
     countdown.update(frame_time)
     game_world.update()
 
 def draw():
     clear_canvas()
     game_world.render()
+    round_fight.draw()
     countdown.draw()
     update_canvas()
 
