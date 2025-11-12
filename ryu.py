@@ -191,7 +191,7 @@ class Normal_Attack:
         sx, sy, sw, sh = self.attack_frames[self.attack_type][idx]
 
         _, _, base_w, base_h = self.attack_frames[self.attack_type][0]
-        dx = (sw - base_w) * 0.5 if self.ryu.face_dir == 1 else -(sw - base_w) * 0.5
+        dx = (sw - base_w) * 0.5 if self.ryu.state == 'left' else -(sw - base_w) * 0.5
         dy = (sh - base_h) * 0.5
 
         draw_x = self.ryu.x + dx
