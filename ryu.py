@@ -185,8 +185,10 @@ class Normal_Attack:
         idx = min(int(self.ryu.frame), len(self.attack_frames[self.attack_type]) - 1)
         sx, sy, sw, sh = self.attack_frames[self.attack_type][idx]
 
-        _, _, base_w, base_h = self.attack_frames[self.attack_type][0]
-        dx = (sw - base_w) * 0.5 if self.ryu.state == 'left' else -(sw - base_w) * 0.5
+        base_w = self.attack_frames[self.attack_type][0][2]
+        dx = ((sw - base_w) * 0.5)
+
+        base_h = self.attack_frames[self.attack_type][0][3]
         dy = (sh - base_h) * 0.5
 
         draw_x = self.ryu.x + dx
@@ -238,15 +240,22 @@ class Crouch_Attack:
             self.ryu.state_machine.handle_state_event(('END_ATTACK', None))
 
     def draw(self):
-        i = int(self.ryu.frame) % len(self.attack_frames[self.attack_type])
-        sx, sy, sw, sh = self.attack_frames[self.attack_type][i]
+        idx = min(int(self.ryu.frame), len(self.attack_frames[self.attack_type]) - 1)
+        sx, sy, sw, sh = self.attack_frames[self.attack_type][idx]
 
-        draw_x = self.ryu.x
-        draw_y = self.ryu.y - (self.STAND_H - self.SIT_H) * 0.5
+        base_w = self.attack_frames[self.attack_type][0][2]
+
+        dx = ((sw - base_w) * 0.5)
+        STAND_H = 92
+        draw_x = self.ryu.x + dx
+        draw_y = (self.ryu.y - STAND_H * 0.5) + sh * 0.5
+
         if self.ryu.state == 'left':
             self.ryu.image.clip_draw(sx, sy, sw, sh, draw_x, draw_y)
         else:
-            self.ryu.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h', draw_x, draw_y, sw, sh)
+            self.ryu.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h',
+                                               draw_x, draw_y, sw, sh)
+
 
 class Sit:
     def __init__(self, ryu):
