@@ -149,8 +149,8 @@ class Normal_Attack:
         self.attack_frames = {
             'P_L': [(8,800,61,92),(80,800,75,92)],
             'P_H': [(272,800,55,92),(336,800,47,92),(168,800,95,89)],
-            'K_L': [(456, 800, 48, 95),(  8, 696, 89, 90),],
-        'K_H': [(392, 696, 42, 100),(320, 696, 61, 100),(104, 696, 89, 100),(264, 696, 49, 100),(200, 696, 56, 100),],
+            'K_L': [(456, 800, 60, 95),(  8, 696, 95, 90),],
+            'K_H': [(392, 696, 42, 100),(320, 696, 61, 100),(104, 696, 89, 100),(264, 696, 49, 100),(200, 696, 56, 100),],
         }
         self.attack_type = None
         self.frame = 0.0
@@ -165,7 +165,7 @@ class Normal_Attack:
                 self.action_per_time = ACTION_PER_TIME_ATTACK_L
             elif sdl.key == SDLK_l:
                 self.attack_type = 'P_H'
-                self.action_per_time = ACTION_PER_TIME_ATTACK_H
+                self.action_per_time = ACTION_PER_TIME_ATTACK_H * 0.7
             elif sdl.key == SDLK_COMMA:
                 self.attack_type = 'K_L'
                 self.action_per_time = ACTION_PER_TIME_ATTACK_COMMA
@@ -205,8 +205,8 @@ class Crouch_Attack:
         self.attack_frames =  {
             'P_L': [ (288, 904, 48, 60),(176, 904, 48, 60),(408, 904, 80, 59),],
             'P_H': [(288, 904, 48, 60), (176, 904, 48, 60), (408, 904, 80, 59), ],
-            'K_L': [ (8, 625, 84, 60) ],
-            'K_H': [ (104, 625, 35, 60), (152, 625, 87, 55) ],
+            'K_L': [ (8, 625, 84, 70) ],
+            'K_H': [ (104, 625, 35, 70), (152, 625, 87, 70) ],
         }
         self.attack_type = None
         self.action_per_time = 1.0
@@ -400,6 +400,55 @@ class Jump:
             self.ryu.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h',
                                                self.ryu.x, draw_y, sw, sh)
 
+class Jump_Diag:
+    def __init__(self, ryu):
+        self.ryu = ryu
+        self.jump_quads = [
+            (50, 990, 48, 100),
+            (100, 990, 45, 70),
+        ]
+        self.yv = 0.0
+        self.vx = 0.0
+        self.ground_y = 0.0
+        self.frame = 0.0
+
+    def enter(self, e):
+        self.ground_y = self.ryu.y
+        self.yv = JUMP_SPEED
+        dir_sign = self.ryu.dir if self.ryu.dir != 0 else (1 if self.ryu.face_dir == 1 else -1)
+        self.vx = dir_sign * RUN_SPEED_PPS
+        self.frame = 0.0
+        self.ryu.air_yv = self.yv
+        self.ryu.air_ground_y = self.ground_y
+
+    def exit(self, e):
+        pass
+
+    def do(self):
+        self.yv -= GRAVITY * game_framework.frame_time
+        self.ryu.y += self.yv * game_framework.frame_time * PIXEL_PER_METER
+        self.ryu.x += self.vx * game_framework.frame_time
+
+        self.frame = (self.frame + 2 * game_framework.frame_time) % 2
+
+        if self.ryu.y <= self.ground_y:
+            self.ryu.y = self.ground_y
+            self.ryu.state_machine.handle_state_event(('LAND', None))
+
+    def draw(self):
+        idx = int(self.frame)
+        sx, sy, sw, sh = self.jump_quads[idx]
+
+        STAND_H = 92
+        head_anchor_y = self.ryu.y + STAND_H * 0.5
+        draw_y = head_anchor_y - sh * 0.5
+
+        if self.ryu.state == 'left':
+            self.ryu.image.clip_draw(sx, sy, sw, sh, self.ryu.x, draw_y)
+        else:
+            self.ryu.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h',
+                                               self.ryu.x, draw_y, sw, sh)
+
 
 class Ryu:
     def __init__(self):
@@ -418,6 +467,7 @@ class Ryu:
         self.JUMP = Jump(self)
         self.CROUCH_ATTACK = Crouch_Attack(self)
         self.JUMP_ATTACK = Jump_Attack(self)
+        self.JUMP_DIAG = Jump_Diag(self)
 
 
         self.state_machine = StateMachine(
@@ -439,7 +489,7 @@ class Ryu:
                     l_down: self.ATTACK,
                     comma_down: self.ATTACK,
                     period_down: self.ATTACK,
-                    up_down: self.JUMP
+                    up_down: self.JUMP_DIAG,
                 },
                 self.ATTACK: {
                     end_attack: self.IDLE
@@ -459,6 +509,13 @@ class Ryu:
                     end_attack: self.SIT,
                 },
                 self.JUMP: {
+                    k_down: self.JUMP_ATTACK,
+                    l_down: self.JUMP_ATTACK,
+                    comma_down: self.JUMP_ATTACK,
+                    period_down: self.JUMP_ATTACK,
+                    land: self.IDLE,
+                },
+                self.JUMP_DIAG: {
                     k_down: self.JUMP_ATTACK,
                     l_down: self.JUMP_ATTACK,
                     comma_down: self.JUMP_ATTACK,
