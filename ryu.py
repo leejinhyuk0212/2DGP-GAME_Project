@@ -1,5 +1,5 @@
 from pico2d import load_image, get_time
-from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDLK_RIGHT, SDL_KEYUP, SDLK_LEFT, SDLK_k, SDLK_l, SDLK_DOWN
+from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDLK_RIGHT, SDL_KEYUP, SDLK_LEFT, SDLK_k, SDLK_l, SDL_KEYUP, SDLK_DOWN, SDLK_COMMA, SDLK_PERIOD
 
 import game_framework
 from state_machine import StateMachine
@@ -13,7 +13,7 @@ RUN_SPEED_PPS = (RUN_SPEED_MPS * PIXEL_PER_METER)
 TIME_PER_ACTION = 0.5
 ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
 TIME_PER_ACTION_ATTACK_L = 0.2   # 약공(빠름)
-TIME_PER_ACTION_ATTACK_H = 0.4    # 강공(느림)
+TIME_PER_ACTION_ATTACK_H = 0.35    # 강공(느림)
 ACTION_PER_TIME_ATTACK_L = 1.0 / TIME_PER_ACTION_ATTACK_L
 ACTION_PER_TIME_ATTACK_H = 1.0 / TIME_PER_ACTION_ATTACK_H
 
@@ -22,23 +22,19 @@ FRAMES_PER_ACTION_IDLE = 3
 FRAMES_PER_ACTION_ATTACK = 3
 FRAMES_PER_ACTION_SIT = 2
 
+time_out = lambda e: e[0] == 'TIMEOUT'
 
 def space_down(e): # e is space down ?
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_SPACE
 
-time_out = lambda e: e[0] == 'TIMEOUT'
-
 def right_down(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_RIGHT
-
 
 def right_up(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_RIGHT
 
-
 def left_down(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_LEFT
-
 
 def left_up(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_LEFT
@@ -57,6 +53,12 @@ def down_down(e):
 
 def down_up(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_DOWN
+
+def comma_down(e):
+    return e[0]=='INPUT' and e[1].type==SDL_KEYDOWN and e[1].key==SDLK_COMMA
+
+def period_down(e):
+    return e[0]=='INPUT' and e[1].type==SDL_KEYDOWN and e[1].key==SDLK_PERIOD
 
 
 
@@ -132,9 +134,21 @@ class Normal_Attack:
         self.attack_frames = {
             'P_L': [(8,800,61,92),(80,800,75,92)],
             'P_H': [(272,800,55,92),(336,800,47,92),(168,800,95,89)],
+            'K_L': [  # 약킥: 4번째 줄 맨오른쪽 -> 5번째 줄 1번
+        (456, 800, 48, 91),  # row4 idx7
+        (  8, 696, 89, 84),  # row5 idx1
+    ],
+        'K_H': [
+        (392, 696, 40, 87),  # row5 idx6
+        (320, 696, 59, 87),
+        (104, 696, 87, 83),
+        (264, 696, 47, 87),
+        (200, 696, 54, 87),
+    ],
         }
         self.attack_type = None
         self.frame = 0.0
+        self.action_per_time = 1.0
 
     def enter(self, e):
         self.ryu.frame = 0.0
@@ -142,15 +156,21 @@ class Normal_Attack:
         if sdl and sdl.type == SDL_KEYDOWN:
             if sdl.key == SDLK_k:
                 self.attack_type = 'P_L'
+                self.action_per_time = ACTION_PER_TIME_ATTACK_L
             elif sdl.key == SDLK_l:
                 self.attack_type = 'P_H'
+                self.action_per_time = ACTION_PER_TIME_ATTACK_H
+            elif sdl.key == SDLK_COMMA:
+                self.attack_type = 'K_L'
+                self.action_per_time = ACTION_PER_TIME_ATTACK_L
+            elif sdl.key == SDLK_PERIOD:
+                self.attack_type = 'K_H'
+                self.action_per_time = ACTION_PER_TIME_ATTACK_H
     def exit(self, e):
         pass
 
     def do(self):
-        self.ryu.frame += FRAMES_PER_ACTION_ATTACK * ACTION_PER_TIME_ATTACK_L * game_framework.frame_time \
-                          if self.attack_type == 'P_L' else \
-                          FRAMES_PER_ACTION_ATTACK * ACTION_PER_TIME_ATTACK_H * game_framework.frame_time
+        self.ryu.frame += FRAMES_PER_ACTION_ATTACK * self.action_per_time * game_framework.frame_time
 
         if int(self.ryu.frame) >= len(self.attack_frames[self.attack_type]):
             self.ryu.state_machine.handle_state_event(('END_ATTACK', None))
@@ -159,13 +179,8 @@ class Normal_Attack:
         idx = min(int(self.ryu.frame), len(self.attack_frames[self.attack_type]) - 1)
         sx, sy, sw, sh = self.attack_frames[self.attack_type][idx]
 
-        # 매번 첫 프레임을 기준으로 비교
         _, _, base_w, base_h = self.attack_frames[self.attack_type][0]
-
-        if self.ryu.face_dir == 1:
-            dx = (sw - base_w) * 0.5
-        else:
-            dx = -(sw - base_w) * 0.5
+        dx = (sw - base_w) * 0.5 if self.ryu.face_dir == 1 else -(sw - base_w) * 0.5
         dy = (sh - base_h) * 0.5
 
         draw_x = self.ryu.x + dx
@@ -175,17 +190,6 @@ class Normal_Attack:
             self.ryu.image.clip_draw(sx, sy, sw, sh, draw_x, draw_y)
         else:
             self.ryu.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h', draw_x, draw_y, sw, sh)
-
-from sdl2 import SDL_KEYDOWN, SDL_KEYUP, SDLK_DOWN
-from pico2d import get_time
-
-# 이벤트 프레디케이트
-def down_down(e):
-    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_DOWN
-
-def down_up(e):
-    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_DOWN
-
 
 class Sit:
     def __init__(self, ryu):
@@ -243,10 +247,16 @@ class Ryu:
                     right_up: self.RUN, left_up: self.RUN,
                     k_down: self.ATTACK,  # 약손 입력 → 공격 상태 전환
                     l_down: self.ATTACK,  # 강손 입력 → 공격 상태 전환
+                    comma_down: self.ATTACK,
+                    period_down: self.ATTACK,
                     down_down: self.SIT,
                 },
                 self.RUN: {
-                    right_up: self.IDLE, left_up: self.IDLE, down_down: self.SIT,
+                    right_up: self.IDLE, left_up: self.IDLE,
+                    k_down: self.ATTACK,
+                    l_down: self.ATTACK,
+                    comma_down: self.ATTACK,
+                    period_down: self.ATTACK,
                 },
                 self.ATTACK: {
                     end_attack: self.IDLE
