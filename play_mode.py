@@ -23,8 +23,12 @@ def init():
     global p1, p2, map, countdown, round_fight, hp_bar, hp_bar2
     p1 = Ryu()
     p1.select = 1
-    p2= Ken()
+    p2 = Ken()
     p2.select = 2
+    p1.state='left'
+    p2.state='right'
+    p1.x=200
+    p2.x=600
     map = Map1()
     hp_bar = HealthBar(p1)
     hp_bar2 = HealthBar(p2)

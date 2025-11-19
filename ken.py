@@ -145,11 +145,11 @@ class Run:
 
 class Ken:
     def __init__(self):
-        self.x, self.y = 600, 90
+        self.x, self.y =0, 90
         self.frame = 0
         self.face_dir = 1
         self.dir = 0
-        self.state = 'right'
+        self.state = 'left'
         self.image = load_image('Ch_Ken.png')
         self._camera = None
         self.max_hp = 100

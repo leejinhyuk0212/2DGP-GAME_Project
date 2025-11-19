@@ -537,7 +537,7 @@ class Jump_Diag_Attack:
 
 class Ryu:
     def __init__(self):
-        self.x, self.y = 200, 90
+        self.x, self.y = 0, 90
         self.frame = 0
         self.face_dir = 1
         self.dir = 0
