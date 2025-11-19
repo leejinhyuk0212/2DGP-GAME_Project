@@ -13,4 +13,5 @@ class HealthBar:
         pass
 
     def draw(self):
+
         self.image.clip_draw(self.x, self.y ,self.width, self.height, 170, 550)
