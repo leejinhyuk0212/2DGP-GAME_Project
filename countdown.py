@@ -8,7 +8,7 @@ class CountdownSprite:
         self.cols = 10
         self.total = 60
 
-        self.x, self.y = 50, 50
+        self.x, self.y = 400, 550
         self.scale = 0.75
         self.step_time = 1.0
 
