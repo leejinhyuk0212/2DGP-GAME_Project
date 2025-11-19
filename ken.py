@@ -154,6 +154,7 @@ class Ken:
         self._camera = None
         self.max_hp = 100
         self.hp = 100
+        self.select = 0
 
         self.IDLE = Idle(self)
         self.RUN = Run(self)
@@ -184,6 +185,7 @@ class Ken:
         cam_x = self._camera.get_camera_x() if self._camera else 0
         draw_x = self.x - cam_x
         self.state_machine.draw_at(draw_x, self.y)
+
 
     def take_damage(self, amount):
         self.hp -= 5

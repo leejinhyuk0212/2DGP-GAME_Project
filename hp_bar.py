@@ -15,7 +15,7 @@ class HealthBar:
         self.hp = self.player.hp
 
     def draw(self):
-        if (self.player.state == 'left'):
+        if (self.player.select == 1):
             hp_w = self.hp * 3
             left_x = 170 - (self.width - hp_w) / 2
             self.image.clip_draw(0, 0, hp_w, self.height, left_x, 550)

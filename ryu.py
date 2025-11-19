@@ -546,6 +546,7 @@ class Ryu:
         self._camera = None
         self.max_hp = 100
         self.hp = 100
+        self.select = 0
 
         self.IDLE = Idle(self)
         self.RUN = Run(self)
@@ -644,6 +645,9 @@ class Ryu:
         cam_x = self._camera.get_camera_x() if self._camera else 0
         draw_x = self.x - cam_x
         self.state_machine.draw_at(draw_x, self.y)
+
+    def get_bb(self):
+        return self.x-30, self.y-30,self.x+30,self.y+30
 
     def take_damage(self, amount):
         self.hp -= amount
