@@ -186,6 +186,12 @@ class Ken:
         draw_x = self.x - cam_x
         self.state_machine.draw_at(draw_x, self.y)
 
+    def get_bb(self):
+        return self.x-30, self.y-30,self.x+30,self.y+30
+
+    def handle_collision(self, group, other):
+        if group == 'p1:p2':
+            self.hp -= 5
 
     def take_damage(self, amount):
         self.hp -= 5

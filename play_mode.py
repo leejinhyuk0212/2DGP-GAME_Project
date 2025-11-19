@@ -17,20 +17,20 @@ def handle_events():
         elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
             game_framework.change_mode(select_mode)
         elif not round_fight.visible:  # ✅ 연출 중 아닐 때만 입력 전달
-            ryu.handle_event(event)
+            p1.handle_event(event)
 
 def init():
-    global ryu, ken, map, countdown, round_fight, hp_bar, hp_bar2
+    global p1, p2, map, countdown, round_fight, hp_bar, hp_bar2
     p1 = Ryu()
-    ryu.select = 1
+    p1.select = 1
     p2= Ken()
-    ken.select = 2
+    p2.select = 2
     map = Map1()
     hp_bar = HealthBar(p1)
     hp_bar2 = HealthBar(p2)
     map.set_target(p1)
     map.set_target(p2)
-    ryu.set_camera(map)
+    p1.set_camera(map)
 
     game_world.add_object(map, 0)
     game_world.add_object(p1, 1)
@@ -56,6 +56,7 @@ def update():
     if not round_fight.visible:
         game_world.update()
     game_world.update()
+    game_world.handle_collisions()
 
 def draw():
     clear_canvas()
