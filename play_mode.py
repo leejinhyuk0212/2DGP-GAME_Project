@@ -6,6 +6,7 @@ from ryu import Ryu
 from map import Map1
 from countdown import CountdownSprite
 from round_fight import RoundFightOverlay
+from hp_bar import HealthBar
 
 def handle_events():
     event_list = get_events()
@@ -21,11 +22,13 @@ def init():
     global ryu, map, countdown, round_fight
     ryu = Ryu()
     map = Map1()
+    hp_bar = HealthBar(ryu)
     map.set_target(ryu)
     ryu.set_camera(map)
 
     game_world.add_object(map, 0)
     game_world.add_object(ryu, 1)
+    game_world.add_object(hp_bar, 2)
 
     round_fight = RoundFightOverlay()
     countdown = CountdownSprite()

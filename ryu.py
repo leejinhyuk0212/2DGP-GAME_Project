@@ -544,6 +544,8 @@ class Ryu:
         self.state = 'left'
         self.image = load_image('Ch_Ryu.png')
         self._camera = None
+        self.max_hp = 100
+        self.hp = 100
 
         self.IDLE = Idle(self)
         self.RUN = Run(self)
@@ -638,3 +640,6 @@ class Ryu:
         cam_x = self._camera.get_camera_x() if self._camera else 0
         draw_x = self.x - cam_x
         self.state_machine.draw_at(draw_x, self.y)
+
+    def take_damage(self, amount):
+        self.hp = max(0, self.hp - amount)
