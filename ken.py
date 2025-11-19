@@ -1,5 +1,5 @@
 from pico2d import load_image, get_time
-from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDLK_RIGHT, SDL_KEYUP, SDLK_LEFT, SDLK_k, SDLK_l, SDL_KEYUP, SDLK_DOWN, SDLK_COMMA, SDLK_PERIOD, SDLK_UP
+from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDLK_RIGHT, SDL_KEYUP, SDLK_LEFT, SDLK_k, SDLK_l, SDLK_DOWN, SDLK_COMMA, SDLK_PERIOD, SDLK_UP
 
 import game_framework
 from state_machine import StateMachine
@@ -14,7 +14,7 @@ RUN_SPEED_PPS = (RUN_SPEED_MPS * PIXEL_PER_METER)
 
 TIME_PER_ACTION = 0.5
 ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
-TIME_PER_ACTION_ATTACK_L = 0.2   
+TIME_PER_ACTION_ATTACK_L = 0.2
 TIME_PER_ACTION_ATTACK_H = 0.7
 ACTION_PER_TIME_ATTACK_L = 1.0 / TIME_PER_ACTION_ATTACK_L
 ACTION_PER_TIME_ATTACK_H = 1.0 / TIME_PER_ACTION_ATTACK_H
@@ -28,12 +28,11 @@ FRAMES_PER_ACTION_IDLE = 3
 FRAMES_PER_ACTION_ATTACK = 3
 FRAMES_PER_ACTION_SIT = 2
 
-
 JUMP_ANIM_DURATION = 0.45
 
 time_out = lambda e: e[0] == 'TIMEOUT'
 
-def space_down(e): # e is space down ?
+def space_down(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_SPACE
 
 def right_down(e):
@@ -64,10 +63,10 @@ def down_up(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_DOWN
 
 def comma_down(e):
-    return e[0]=='INPUT' and e[1].type==SDL_KEYDOWN and e[1].key==SDLK_COMMA
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_COMMA
 
 def period_down(e):
-    return e[0]=='INPUT' and e[1].type==SDL_KEYDOWN and e[1].key==SDLK_PERIOD
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_PERIOD
 
 def up_down(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_UP
@@ -76,16 +75,15 @@ def land(e):
     return e[0] == 'LAND'
 
 
-
 class Idle:
-    def __init__(self, ryu):
-        self.ryu = ryu
-        self.idle_stand = (328, 1096, 46, 92)
+    def __init__(self, ken):
+        self.ken = ken
+        self.idle_stand = (328, 936, 48, 94)
 
     def enter(self, e):
-        self.ryu.wait_time = get_time()
-        self.ryu.dir = 0
-        self.ryu.frame = 0.0
+        self.ken.wait_time = get_time()
+        self.ken.dir = 0
+        self.ken.frame = 0.0
 
     def exit(self, e):
         pass
@@ -96,19 +94,18 @@ class Idle:
     def draw(self):
         sx, sy, sw, sh = self.idle_stand
 
-        if self.ryu.state == 'left':
-            self.ryu.image.clip_draw(sx, sy, sw, sh, self.ryu.x, self.ryu.y)
+        if self.ken.state == 'left':
+            self.ken.image.clip_draw(sx, sy, sw, sh, self.ken.x, self.ken.y)
         else:
-            self.ryu.image.clip_composite_draw(
+            self.ken.image.clip_composite_draw(
                 sx, sy, sw, sh, 0, 'h',
-                self.ryu.x, self.ryu.y, sw, sh
+                self.ken.x, self.ken.y, sw, sh
             )
 
 
 class Run:
-    def __init__(self, ryu):
-        self.ryu = ryu
-
+    def __init__(self, ken):
+        self.ken = ken
         self.run_quads = [
             (8, 1096, 38, 95),
             (56, 1096, 45, 94),
@@ -120,73 +117,35 @@ class Run:
 
     def enter(self, e):
         if right_down(e):
-            self.ryu.dir = self.ryu.face_dir = 1
+            self.ken.dir = self.ken.face_dir = 1
         elif left_down(e):
-            self.ryu.dir = self.ryu.face_dir = -1
+            self.ken.dir = self.ken.face_dir = -1
         elif right_up(e) or left_up(e):
-            self.ryu.dir = self.ryu.face_dir = 0
-        self.ryu.frame = 0.0
+            self.ken.dir = self.ken.face_dir = 0
+        self.ken.frame = 0.0
 
     def exit(self, e):
-        if space_down(e):
-            self.ryu.fire_ball()
+        if space_down(e) and hasattr(self.ken, "fire_ball"):
+            self.ken.fire_ball()
 
     def do(self):
-        self.ryu.frame = (self.ryu.frame + FRAMES_PER_ACTION_RUN * ACTION_PER_TIME * game_framework.frame_time) % FRAMES_PER_ACTION_RUN
-        self.ryu.x += self.ryu.dir * RUN_SPEED_PPS * game_framework.frame_time
+        self.ken.frame = (self.ken.frame + FRAMES_PER_ACTION_RUN * ACTION_PER_TIME * game_framework.frame_time) % FRAMES_PER_ACTION_RUN
+        self.ken.x += self.ken.dir * RUN_SPEED_PPS * game_framework.frame_time
 
     def draw(self):
-        idx = int(self.ryu.frame)
+        idx = int(self.ken.frame)
         sx, sy, sw, sh = self.run_quads[idx]
 
-        if self.ryu.state == 'left':
-            self.ryu.image.clip_draw(sx, sy, sw, sh, self.ryu.x, self.ryu.y)
-        else:  # 왼쪽
-            self.ryu.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h',
-                                               self.ryu.x, self.ryu.y, sw, sh)
-
-    def exit(self, e):
-        pass
-
-    def do(self):
-        # 애니메이션 진행(끝 프레임에서 고정)
-        self.ryu.frame += FRAMES_PER_ACTION_ATTACK * self.action_per_time * game_framework.frame_time
-        if int(self.ryu.frame) >= len(self.attack_frames[self.attack_type]):
-            self.ryu.frame = len(self.attack_frames[self.attack_type]) - 1
-
-        # 공중 물리: 세로/가로 이동
-        self.yv -= GRAVITY * game_framework.frame_time
-        self.ryu.y += self.yv * game_framework.frame_time * PIXEL_PER_METER
-        self.ryu.x += self.vx * game_framework.frame_time
-
-        # 착지 처리
-        if self.ryu.y <= self.ground_y:
-            self.ryu.y = self.ground_y
-            self.ryu.state_machine.handle_state_event(('LAND', None))
-
-    def draw(self):
-        idx = min(int(self.ryu.frame), len(self.attack_frames[self.attack_type]) - 1)
-        sx, sy, sw, sh = self.attack_frames[self.attack_type][idx]
-
-        # 좌하단(발) 기준 고정: 폭/높이 변화 보정
-        base_w = self.attack_frames[self.attack_type][0][2]
-        dx = ((sw - base_w) * 0.5) * self.ryu.face_dir
-
-        STAND_H = 92
-        draw_x = self.ryu.x + dx
-        draw_y = (self.ryu.y - STAND_H * 0.5) + sh * 0.5
-
-        if self.ryu.state == 'left':
-            self.ryu.image.clip_draw(sx, sy, sw, sh, draw_x, draw_y)
+        if self.ken.state == 'left':
+            self.ken.image.clip_draw(sx, sy, sw, sh, self.ken.x, self.ken.y)
         else:
-            self.ryu.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h', draw_x, draw_y, sw, sh)
-
-
+            self.ken.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h',
+                                               self.ken.x, self.ken.y, sw, sh)
 
 
 class Ken:
     def __init__(self):
-        self.x, self.y = 400, 90
+        self.x, self.y = 600, 90
         self.frame = 0
         self.face_dir = 1
         self.dir = 0
@@ -198,7 +157,6 @@ class Ken:
 
         self.IDLE = Idle(self)
         self.RUN = Run(self)
-
 
         self.state_machine = StateMachine(
             self.IDLE,
@@ -228,4 +186,4 @@ class Ken:
         self.state_machine.draw_at(draw_x, self.y)
 
     def take_damage(self, amount):
-        self.hp = max(0, self.hp - amount)
+        self.hp -= 5

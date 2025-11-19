@@ -1,17 +1,21 @@
 from pico2d import *
+from ryu import Ryu
 
 class HealthBar:
-    def __init__(self, ryu):
-        self.ryu = ryu
+    def __init__(self, player):
+        self.player = player
         self.x = 0
         self.y = 0
         self.width=300
         self.height=22
         self.image = load_image('hp_bar.png')
+        self.hp = player.hp
+
 
     def update(self):
-        pass
+        self.hp = self.player.hp
 
     def draw(self):
-
-        self.image.clip_draw(self.x, self.y ,self.width, self.height, 170, 550)
+        hp_w = self.hp * 3
+        left_x = 170 - (self.width - hp_w) / 2
+        self.image.clip_draw(0, 0, hp_w, self.height, left_x, 550)

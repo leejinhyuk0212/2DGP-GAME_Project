@@ -3,6 +3,7 @@ import game_framework
 import select_mode
 import game_world
 from ryu import Ryu
+from ken import Ken
 from map import Map1
 from countdown import CountdownSprite
 from round_fight import RoundFightOverlay
@@ -19,8 +20,9 @@ def handle_events():
             ryu.handle_event(event)
 
 def init():
-    global ryu, map, countdown, round_fight
+    global ryu, ken, map, countdown, round_fight
     ryu = Ryu()
+    ken= Ken()
     map = Map1()
     hp_bar = HealthBar(ryu)
     map.set_target(ryu)
@@ -28,6 +30,7 @@ def init():
 
     game_world.add_object(map, 0)
     game_world.add_object(ryu, 1)
+    game_world.add_object(ken, 1)
     game_world.add_object(hp_bar, 2)
 
     round_fight = RoundFightOverlay()

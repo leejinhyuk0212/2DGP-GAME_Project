@@ -1,5 +1,5 @@
 from pico2d import load_image, get_time
-from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDLK_RIGHT, SDL_KEYUP, SDLK_LEFT, SDLK_k, SDLK_l, SDL_KEYUP, SDLK_DOWN, SDLK_COMMA, SDLK_PERIOD, SDLK_UP
+from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDLK_RIGHT, SDL_KEYUP, SDLK_LEFT, SDLK_k, SDLK_l, SDL_KEYUP, SDLK_DOWN, SDLK_COMMA, SDLK_PERIOD, SDLK_UP, SDLK_SLASH
 
 import game_framework
 from state_machine import StateMachine
@@ -636,10 +636,16 @@ class Ryu:
     def handle_event(self, event):
         self.state_machine.handle_state_event(('INPUT', event))
 
+        if event.type == SDL_KEYDOWN and event.key == SDLK_SLASH:
+            self.take_damage(5)
+
+
     def draw(self):
         cam_x = self._camera.get_camera_x() if self._camera else 0
         draw_x = self.x - cam_x
         self.state_machine.draw_at(draw_x, self.y)
 
     def take_damage(self, amount):
-        self.hp = max(0, self.hp - amount)
+        self.hp -= amount
+        if self.hp < 0:
+            self.hp = 0
