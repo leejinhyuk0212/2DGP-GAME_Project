@@ -20,11 +20,12 @@ def handle_events():
             ryu.handle_event(event)
 
 def init():
-    global ryu, ken, map, countdown, round_fight
+    global ryu, ken, map, countdown, round_fight, hp_bar, hp_bar2
     ryu = Ryu()
     ken= Ken()
     map = Map1()
     hp_bar = HealthBar(ryu)
+    hp_bar2 = HealthBar(ken)
     map.set_target(ryu)
     ryu.set_camera(map)
 
@@ -32,6 +33,7 @@ def init():
     game_world.add_object(ryu, 1)
     game_world.add_object(ken, 1)
     game_world.add_object(hp_bar, 2)
+    game_world.add_object(hp_bar2, 2)
 
     round_fight = RoundFightOverlay()
     countdown = CountdownSprite()

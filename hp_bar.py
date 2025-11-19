@@ -1,5 +1,4 @@
 from pico2d import *
-from ryu import Ryu
 
 class HealthBar:
     def __init__(self, player):
@@ -16,6 +15,11 @@ class HealthBar:
         self.hp = self.player.hp
 
     def draw(self):
-        hp_w = self.hp * 3
-        left_x = 170 - (self.width - hp_w) / 2
-        self.image.clip_draw(0, 0, hp_w, self.height, left_x, 550)
+        if (self.player.state == 'left'):
+            hp_w = self.hp * 3
+            left_x = 170 - (self.width - hp_w) / 2
+            self.image.clip_draw(0, 0, hp_w, self.height, left_x, 550)
+        else:
+            hp_w = self.hp * 3
+            right_x = 630 + (self.width - hp_w) / 2
+            self.image.clip_draw(0, 0, hp_w, self.height, right_x, 550)
