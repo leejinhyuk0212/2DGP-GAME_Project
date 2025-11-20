@@ -159,6 +159,9 @@ class Ken:
         self.IDLE = Idle(self)
         self.RUN = Run(self)
 
+        self.is_attacking = False
+        self._hit_targets = set()
+
         self.state_machine = StateMachine(
             self.IDLE,
             {
@@ -171,6 +174,7 @@ class Ken:
                 },
             }
         )
+
 
     def update(self):
         self.state_machine.update()
@@ -190,8 +194,17 @@ class Ken:
         return self.x-30, self.y-30,self.x+30,self.y+30
 
     def handle_collision(self, group, other):
+        # 상대가 공격 중이면, 상대의 히트셋에 없을 때만 데미지 적용
         if group == 'p1:p2':
-            self.hp -= 5
+            if getattr(other, 'is_attacking', False):
+                if not hasattr(other, '_hit_targets'):
+                    other._hit_targets = set()
+                if self not in other._hit_targets:
+                    other._hit_targets.add(self)
+                    self.take_damage(5)
 
     def take_damage(self, amount):
-        self.hp -= 5
+        # 인자로 받은 만큼 데미지 적용
+        self.hp -= amount
+        if self.hp < 0:
+            self.hp = 0

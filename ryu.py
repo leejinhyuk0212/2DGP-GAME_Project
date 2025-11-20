@@ -159,6 +159,8 @@ class Normal_Attack:
         self.action_per_time = 1.0
 
     def enter(self, e):
+        self.ryu.is_attacking = True
+        self.ryu._hit_targets.clear()
         self.ryu.frame = 0.0
         sdl = e[1]
         if sdl and sdl.type == SDL_KEYDOWN:
@@ -217,6 +219,8 @@ class Crouch_Attack:
         self.SIT_H   = 70
 
     def enter(self, e):
+        self.ryu.is_attacking = True
+        self.ryu._hit_targets.clear()
         self.ryu.dir = 0
         self.ryu.frame = 0.0
         sdl = e[1]
@@ -274,11 +278,12 @@ class Jump_Attack:
         self.ground_y = 0.0
 
     def enter(self, e):
+        self.ryu.is_attacking = True
+        self.ryu._hit_targets.clear()
         self.yv = self.ryu.JUMP.yv
         self.ground_y = self.ryu.JUMP.ground_y
         self.ryu.dir = 0
         self.ryu.frame = 0.0
-
 
         sdl = e[1] if e and len(e) > 1 else None
         if sdl and sdl.type == SDL_KEYDOWN:
@@ -470,6 +475,9 @@ class Jump_Diag_Attack:
         self.ground_y = 0.0
 
     def enter(self, e):
+        self.ryu.is_attacking = True
+        self.ryu._hit_targets.clear()
+
         # Jump_Diag에서 저장해둔 공중 상태가 있으면 재사용
         self.yv = getattr(self.ryu, 'air_yv', JUMP_SPEED)
         self.ground_y = getattr(self.ryu, 'air_ground_y', self.ryu.y)
@@ -557,6 +565,9 @@ class Ryu:
         self.JUMP_ATTACK = Jump_Attack(self)
         self.JUMP_DIAG = Jump_Diag(self)
         self.JUMP_DIAG_ATTACK = Jump_Diag_Attack(self)
+
+        self.is_attacking = False
+        self._hit_targets = set()
 
 
         self.state_machine = StateMachine(
@@ -650,8 +661,14 @@ class Ryu:
         return self.x-30, self.y-30,self.x+30,self.y+30
 
     def handle_collision(self, group, other):
+        # 상대가 공격 중이면, 상대의 히트셋에 없을 때만 데미지 적용
         if group == 'p1:p2':
-            self.hp -= 5
+            if getattr(other, 'is_attacking', False):
+                if not hasattr(other, '_hit_targets'):
+                    other._hit_targets = set()
+                if self not in other._hit_targets:
+                    other._hit_targets.add(self)
+                    self.take_damage(5)
 
     def take_damage(self, amount):
         self.hp -= amount
