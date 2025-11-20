@@ -75,6 +75,11 @@ def up_down(e):
 def land(e):
     return e[0] == 'LAND'
 
+def hit(e):
+    return e[0] == 'HIT'
+
+def end_hit(e):
+    return e[0] == 'END_HIT'
 
 
 class Idle:
@@ -177,7 +182,7 @@ class Normal_Attack:
                 self.attack_type = 'K_H'
                 self.action_per_time = ACTION_PER_TIME_ATTACK_PERIOD
     def exit(self, e):
-        pass
+        self.ryu.is_attacking = False
 
     def do(self):
         self.ryu.frame += FRAMES_PER_ACTION_ATTACK * self.action_per_time * game_framework.frame_time
@@ -238,7 +243,8 @@ class Crouch_Attack:
                 self.attack_type = 'K_H'
                 self.action_per_time = ACTION_PER_TIME_ATTACK_PERIOD
 
-    def exit(self, e): pass
+    def exit(self, e):
+        self.ryu.is_attacking = False
 
     def do(self):
         self.ryu.frame += FRAMES_PER_ACTION_ATTACK * self.action_per_time * game_framework.frame_time
@@ -297,7 +303,7 @@ class Jump_Attack:
                 self.attack_type = 'K_H'; self.action_per_time = ACTION_PER_TIME_ATTACK_PERIOD
 
     def exit(self, e):
-        pass
+        self.ryu.is_attacking = False
 
     def do(self):
         self.ryu.frame += FRAMES_PER_ACTION_ATTACK * self.action_per_time * game_framework.frame_time
@@ -505,7 +511,7 @@ class Jump_Diag_Attack:
             self.attack_type = 'P_L'
 
     def exit(self, e):
-        pass
+        self.ryu.is_attacking = False
 
     def do(self):
         # 애니메이션 진행(끝 프레임에서 고정)
@@ -674,3 +680,6 @@ class Ryu:
         self.hp -= amount
         if self.hp < 0:
             self.hp = 0
+        # StateMachine의 현재 상태 속성명은 `cur_state` 이므로 그걸 사용하도록 수정
+        if getattr(self, 'state_machine', None) and getattr(self.state_machine, 'cur_state', None) is not getattr(self,'HIT',None):
+            self.state_machine.handle_state_event(('HIT', None))

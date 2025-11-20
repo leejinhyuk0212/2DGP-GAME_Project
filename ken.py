@@ -74,6 +74,12 @@ def up_down(e):
 def land(e):
     return e[0] == 'LAND'
 
+def hit(e):
+    return e[0] == 'HIT'
+
+def end_hit(e):
+    return e[0] == 'END_HIT'
+
 
 class Idle:
     def __init__(self, ken):
@@ -142,6 +148,40 @@ class Run:
             self.ken.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h',
                                                self.ken.x, self.ken.y, sw, sh)
 
+class Hit:
+    def __init__(self, ken):
+        self.ken = ken
+        self.quad = (8, 128, 63, 91)  # 단순 예: idle 프레임 재사용
+        self.duration = 0.25
+        self.t = 0.0
+
+    def enter(self, e):
+        self.t = 0.0
+        self.ken.dir = 0
+        if (self.ken.state == 'left'):
+            self.ken.x -= 10
+        else :
+            self.ken.x += 10
+
+    def exit(self, e):
+        pass
+
+    def do(self):
+        self.t += game_framework.frame_time
+        if self.t >= self.duration:
+            self.ken.state_machine.handle_state_event(('END_HIT', None))
+
+    def draw(self):
+        sx, sy, sw, sh = self.quad
+        draw_x = self.ken.x
+        draw_y = self.ken.y
+        if self.ken.state == 'left':
+            self.ken.image.clip_draw(sx, sy, sw, sh, draw_x, draw_y)
+        else:
+            self.ken.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h', draw_x, draw_y, sw, sh)
+
+
+
 
 class Ken:
     def __init__(self):
@@ -158,6 +198,7 @@ class Ken:
 
         self.IDLE = Idle(self)
         self.RUN = Run(self)
+        self.HIT = Hit(self)
 
         self.is_attacking = False
         self._hit_targets = set()
@@ -168,10 +209,14 @@ class Ken:
                 self.IDLE: {
                     right_down: self.RUN, left_down: self.RUN,
                     right_up: self.RUN, left_up: self.RUN,
+                    hit: self.HIT,
                 },
                 self.RUN: {
                     right_up: self.IDLE, left_up: self.IDLE,
                 },
+                self.HIT: {
+                    end_hit: self.IDLE,
+                }
             }
         )
 
@@ -204,7 +249,8 @@ class Ken:
                     self.take_damage(5)
 
     def take_damage(self, amount):
-        # 인자로 받은 만큼 데미지 적용
         self.hp -= amount
         if self.hp < 0:
             self.hp = 0
+        if getattr(self, 'state_machine', None) and getattr(self.state_machine, 'cur_state', None) is not getattr(self,'HIT',None):
+            self.state_machine.handle_state_event(('HIT', None))
