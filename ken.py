@@ -1,5 +1,6 @@
 from pico2d import load_image, get_time
-from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDLK_RIGHT, SDL_KEYUP, SDLK_LEFT, SDLK_k, SDLK_l, SDLK_DOWN, SDLK_COMMA, SDLK_PERIOD, SDLK_UP
+from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDL_KEYUP, SDLK_k, SDLK_l, SDLK_COMMA, SDLK_PERIOD
+from sdl2 import SDLK_a, SDLK_d, SDLK_w, SDLK_s
 
 import game_framework
 from state_machine import StateMachine
@@ -36,16 +37,16 @@ def space_down(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_SPACE
 
 def right_down(e):
-    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_RIGHT
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_d
 
 def right_up(e):
-    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_RIGHT
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key ==SDLK_d
 
 def left_down(e):
-    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_LEFT
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_a
 
 def left_up(e):
-    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_LEFT
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_a
 
 def k_down(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_k
@@ -113,12 +114,12 @@ class Run:
     def __init__(self, ken):
         self.ken = ken
         self.run_quads = [
-            (8, 1096, 38, 95),
-            (56, 1096, 45, 94),
-            (112, 1096, 45, 93),
-            (168, 1096, 35, 95),
-            (216, 1096, 45, 94),
-            (272, 1096, 47, 93),
+            (8, 936, 38, 95),
+            (56, 936, 42, 94),
+            (112, 936, 46, 93),
+            (168, 936, 35, 95),
+            (216, 936, 42, 94),
+            (272, 936, 47, 93),
         ]
 
     def enter(self, e):
