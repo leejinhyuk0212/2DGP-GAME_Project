@@ -182,8 +182,6 @@ class Hit:
             self.ken.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h', draw_x, draw_y, sw, sh)
 
 
-
-
 class Ken:
     def __init__(self):
         self.x, self.y =0, 90
