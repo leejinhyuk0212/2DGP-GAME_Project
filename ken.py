@@ -123,16 +123,16 @@ class Run:
         ]
 
     def enter(self, e):
-        if right_down(e):
+        if self.ken.right_down(e):
             self.ken.dir = self.ken.face_dir = 1
-        elif left_down(e):
+        elif self.ken.left_down(e):
             self.ken.dir = self.ken.face_dir = -1
-        elif right_up(e) or left_up(e):
+        elif self.ken.right_up(e) or self.ken.left_up(e):
             self.ken.dir = self.ken.face_dir = 0
         self.ken.frame = 0.0
 
     def exit(self, e):
-        if space_down(e) and hasattr(self.ken, "fire_ball"):
+        if self.ken.space_down(e) and hasattr(self.ken, "fire_ball"):
             self.ken.fire_ball()
 
     def do(self):
