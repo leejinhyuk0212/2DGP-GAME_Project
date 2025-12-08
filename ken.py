@@ -240,7 +240,6 @@ class Ken:
         return self.x-30, self.y-30,self.x+30,self.y+30
 
     def handle_collision(self, group, other):
-        # 상대가 공격 중이면, 상대의 히트셋에 없을 때만 데미지 적용
         if group == 'p1:p2':
             if getattr(other, 'is_attacking', False):
                 if not hasattr(other, '_hit_targets'):
