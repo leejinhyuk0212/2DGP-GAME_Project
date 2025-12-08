@@ -2,22 +2,31 @@ import game_framework
 from pico2d import *
 import title_mode
 import play_mode
+import time
 
 # 이미지, 선택 커서 위치/속도, 이동 플래그
 image = None
 select = None
 select_x = 250
 select_y = 300
-SELECT_SPEED = 300  # 픽셀/초
+GRID_X = 92
+GRID_Y = 105
+SCREEN_W, SCREEN_H = 800, 600
 
-move_left = move_right = move_up = move_down = False
+blink_interval = 0.5
+blink_visible = True
+last_blink_time = 0.0
+blink_paused = False
+
 
 def init():
     global image, select, select_x, select_y
     image = load_image('characterselect.png')   # 배경 (예: 1024x1024)
     select = load_image('select1.png')          # 커서 또는 스프라이트 시트
-    # 필요 시 select2 = load_image('select2.png')
     select_x, select_y = 180, 250
+    blink_visible = True
+    last_blink_time = time.time()
+    blink_paused = False
 
 def finish():
     global image, select
@@ -29,36 +38,24 @@ def finish():
         select = None
 
 def update():
-    global select_x, select_y
-    dt = 1.0 / 60.0
-    dx = dy = 0
-    if move_left:
-        dx -= SELECT_SPEED * dt
-    if move_right:
-        dx += SELECT_SPEED * dt
-    if move_up:
-        dy += SELECT_SPEED * dt
-    if move_down:
-        dy -= SELECT_SPEED * dt
-
-    select_x += dx
-    select_y += dy
-
-    select_x = max(0, min(800, select_x))
-    select_y = max(0, min(600, select_y))
+    global blink_visible, last_blink_time
+    now = time.time()
+    if now - last_blink_time >= blink_interval:
+        blink_visible = not blink_visible
+        last_blink_time = now
 
 def draw():
     clear_canvas()
     if image:
         image.draw(400, 300, 800, 600)
-    if select:
+    if select and blink_visible:
         select.draw(select_x, select_y, 50, 50)
     update_canvas()
 
 def handle_events():
-    global move_left, move_right, move_up, move_down
-    event_list = get_events()
-    for event in event_list:
+    global select_x, select_y, blink_visible, last_blink_time, blink_paused
+    events = get_events()
+    for event in events:
         if event.type == SDL_QUIT:
             game_framework.quit()
         elif event.type == SDL_KEYDOWN:
@@ -67,22 +64,25 @@ def handle_events():
             elif event.key == SDLK_SPACE:
                 game_framework.change_mode(play_mode)
             elif event.key == SDLK_LEFT:
-                move_left = True
+                select_x -= GRID_X
+                blink_visible = True
+                blink_paused = True
             elif event.key == SDLK_RIGHT:
-                move_right = True
+                select_x += GRID_X
+                blink_visible = True
+                blink_paused = True
             elif event.key == SDLK_UP:
-                move_up = True
+                select_y += GRID_Y
+                blink_visible = True
+                blink_paused = True
             elif event.key == SDLK_DOWN:
-                move_down = True
-        elif event.type == SDL_KEYUP:
-            if event.key == SDLK_LEFT:
-                move_left = False
-            elif event.key == SDLK_RIGHT:
-                move_right = False
-            elif event.key == SDLK_UP:
-                move_up = False
-            elif event.key == SDLK_DOWN:
-                move_down = False
+                select_y -= GRID_Y
+                blink_visible = True
+                blink_paused = True
+
+            # 화면 경계 제한 (선택 커서가 화면 밖으로 나가지 않도록)
+            select_x = max(0, min(SCREEN_W, select_x))
+            select_y = max(0, min(SCREEN_H, select_y))
 
 def pause():
     pass
