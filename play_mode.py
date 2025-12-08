@@ -9,6 +9,9 @@ from countdown import CountdownSprite
 from round_fight import RoundFightOverlay
 from hp_bar import HealthBar
 
+selected_p1 = None
+selected_p2 = None
+
 def handle_events():
     event_list = get_events()
     for event in event_list:
@@ -22,12 +25,20 @@ def handle_events():
 
 def init():
     global p1, p2, map, countdown, round_fight, hp_bar, hp_bar2
-    p1 = Ryu()
+    if selected_p1 == 'Ryu' or selected_p1 is None:
+        p1 = Ryu()
+    elif selected_p1 == 'Ken':
+        p1 = Ken()
+
+    if selected_p2 == 'Ken' or selected_p2 is None:
+        p2 = Ken()
+    elif selected_p2 == 'Ryu':
+        p2 = Ryu()
+
     p1.select = 1
-    p2 = Ken()
     p2.select = 2
-    p1.state='left'
-    p2.state='right'
+    p1.state = 'left'
+    p2.state = 'right'
     p1.x=200
     p2.x=600
     map = Map1()

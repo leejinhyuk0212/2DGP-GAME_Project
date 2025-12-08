@@ -7,21 +7,26 @@ import time
 # 이미지, 선택 커서 위치/속도, 이동 플래그
 image = None
 select = None
-select_x = 250
-select_y = 300
+select_x = 180
+select1_pos = False
+select_y = 250
+select2_pos = False
 GRID_X = 92
 GRID_Y = 105
 SCREEN_W, SCREEN_H = 800, 600
 
-MIN_X = 250
-MAX_X = 250 + GRID_X * 4
-MAX_Y = 300
-MIN_Y = 195
+MIN_X = 180
+MAX_X = 180 + GRID_X * 5
+MAX_Y = 250
+MIN_Y = 145
 
 blink_interval = 0.5
 blink_visible = True
 last_blink_time = 0.0
 blink_paused = False
+
+RYU_POSITION = (180, 250)
+KEN_POSITION = (180, 250 - GRID_Y)
 
 
 def init():
@@ -60,6 +65,7 @@ def draw():
 
 def handle_events():
     global select_x, select_y, blink_visible, last_blink_time, blink_paused
+    global select1_pos
     events = get_events()
     for event in events:
         if event.type == SDL_QUIT:
@@ -68,7 +74,15 @@ def handle_events():
             if event.key == SDLK_ESCAPE:
                 game_framework.change_mode(title_mode)
             elif event.key == SDLK_SPACE:
-                game_framework.change_mode(play_mode)
+                if not select1_pos:
+                    if select_x == RYU_POSITION[0] and select_y == RYU_POSITION[1]:
+                        play_mode.selected_p1 = 'Ryu'
+                        select1_pos = True
+                        game_framework.change_mode(play_mode)
+                    elif select_x == KEN_POSITION[0] and select_y == KEN_POSITION[1]:
+                        play_mode.selected_p1 = 'Ken'
+                        select1_pos = True
+                        game_framework.change_mode(play_mode)
             elif event.key == SDLK_LEFT:
                 if select_x > MIN_X:
                     select_x -= GRID_X
