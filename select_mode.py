@@ -13,6 +13,11 @@ GRID_X = 92
 GRID_Y = 105
 SCREEN_W, SCREEN_H = 800, 600
 
+MIN_X = 250
+MAX_X = 250 + GRID_X * 4
+MAX_Y = 300
+MIN_Y = 195
+
 blink_interval = 0.5
 blink_visible = True
 last_blink_time = 0.0
@@ -21,8 +26,9 @@ blink_paused = False
 
 def init():
     global image, select, select_x, select_y
-    image = load_image('characterselect.png')   # 배경 (예: 1024x1024)
-    select = load_image('select1.png')          # 커서 또는 스프라이트 시트
+    image = load_image('characterselect.png')
+    select = load_image('select1.png')
+    select2 = load_image('select2.png')
     select_x, select_y = 180, 250
     blink_visible = True
     last_blink_time = time.time()
@@ -64,25 +70,30 @@ def handle_events():
             elif event.key == SDLK_SPACE:
                 game_framework.change_mode(play_mode)
             elif event.key == SDLK_LEFT:
-                select_x -= GRID_X
-                blink_visible = True
-                blink_paused = True
+                if select_x > MIN_X:
+                    select_x -= GRID_X
+                    blink_visible = True
+                    blink_paused = True
+                    last_blink_time = time.time()
             elif event.key == SDLK_RIGHT:
-                select_x += GRID_X
-                blink_visible = True
-                blink_paused = True
+                if select_x < MAX_X:
+                    select_x += GRID_X
+                    blink_visible = True
+                    blink_paused = True
+                    last_blink_time = time.time()
             elif event.key == SDLK_UP:
-                select_y += GRID_Y
-                blink_visible = True
-                blink_paused = True
+                if select_y < MAX_Y:
+                    select_y += GRID_Y
+                    blink_visible = True
+                    blink_paused = True
+                    last_blink_time = time.time()
             elif event.key == SDLK_DOWN:
-                select_y -= GRID_Y
-                blink_visible = True
-                blink_paused = True
+                if select_y > MIN_Y:
+                    select_y -= GRID_Y
+                    blink_visible = True
+                    blink_paused = True
+                    last_blink_time = time.time()
 
-            # 화면 경계 제한 (선택 커서가 화면 밖으로 나가지 않도록)
-            select_x = max(0, min(SCREEN_W, select_x))
-            select_y = max(0, min(SCREEN_H, select_y))
 
 def pause():
     pass
