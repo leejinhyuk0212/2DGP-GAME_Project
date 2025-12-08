@@ -1,6 +1,6 @@
 from pico2d import load_image, get_time
-from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDL_KEYUP, SDLK_k, SDLK_l, SDLK_COMMA, SDLK_PERIOD
-from sdl2 import SDLK_a, SDLK_d, SDLK_w, SDLK_s
+from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDLK_RIGHT, SDLK_LEFT, SDLK_k, SDLK_l, SDL_KEYUP, SDLK_DOWN, SDLK_COMMA, SDLK_PERIOD, SDLK_UP, SDLK_SLASH
+from sdl2 import SDLK_a, SDLK_d, SDLK_w, SDLK_s, SDLK_f, SDLK_g, SDLK_v, SDLK_b
 
 import game_framework
 from state_machine import StateMachine
@@ -183,7 +183,8 @@ class Hit:
 
 
 class Ken:
-    def __init__(self):
+    def __init__(self, player=1):
+        self.player = player
         self.x, self.y =0, 90
         self.frame = 0
         self.face_dir = 1
@@ -194,6 +195,37 @@ class Ken:
         self.max_hp = 100
         self.hp = 100
         self.select = 0
+
+        if self.player == 1:
+            self.keymap = {
+                'LEFT': SDLK_LEFT, 'RIGHT': SDLK_RIGHT, 'UP': SDLK_UP, 'DOWN': SDLK_DOWN,
+                'K': SDLK_k, 'L': SDLK_l, 'COMMA': SDLK_COMMA, 'PERIOD': SDLK_PERIOD,
+                'SPACE': SDLK_SPACE
+            }
+        else:
+            self.keymap = {
+                'LEFT': SDLK_a, 'RIGHT': SDLK_d, 'UP': SDLK_w, 'DOWN': SDLK_s,
+                'K': SDLK_f, 'L': SDLK_g, 'COMMA': SDLK_v, 'PERIOD': SDLK_b,
+                'SPACE': SDLK_SPACE
+            }
+
+        self.time_out = lambda e: e[0] == 'TIMEOUT'
+        self.space_down = lambda e: e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == self.keymap['SPACE']
+        self.right_down = lambda e: e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == self.keymap['RIGHT']
+        self.right_up = lambda e: e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == self.keymap['RIGHT']
+        self.left_down = lambda e: e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == self.keymap['LEFT']
+        self.left_up = lambda e: e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == self.keymap['LEFT']
+        self.k_down = lambda e: e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == self.keymap['K']
+        self.l_down = lambda e: e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == self.keymap['L']
+        self.end_attack = lambda e: e[0] == 'END_ATTACK'
+        self.down_down = lambda e: e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == self.keymap['DOWN']
+        self.down_up = lambda e: e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == self.keymap['DOWN']
+        self.comma_down = lambda e: e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == self.keymap['COMMA']
+        self.period_down = lambda e: e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == self.keymap['PERIOD']
+        self.up_down = lambda e: e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == self.keymap['UP']
+        self.land = lambda e: e[0] == 'LAND'
+        self.hit = lambda e: e[0] == 'HIT'
+        self.end_hit = lambda e: e[0] == 'END_HIT'
 
         self.IDLE = Idle(self)
         self.RUN = Run(self)
@@ -206,15 +238,15 @@ class Ken:
             self.IDLE,
             {
                 self.IDLE: {
-                    right_down: self.RUN, left_down: self.RUN,
-                    right_up: self.RUN, left_up: self.RUN,
-                    hit: self.HIT,
+                    self.right_down: self.RUN, self.left_down: self.RUN,
+                    self.right_up: self.RUN, self.left_up: self.RUN,
+                    self.hit: self.HIT,
                 },
                 self.RUN: {
-                    right_up: self.IDLE, left_up: self.IDLE,
+                    self.right_up: self.IDLE, self.left_up: self.IDLE,
                 },
                 self.HIT: {
-                    end_hit: self.IDLE,
+                    self.end_hit: self.IDLE,
                 }
             }
         )

@@ -1,5 +1,6 @@
 from pico2d import load_image, get_time
-from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDLK_RIGHT, SDL_KEYUP, SDLK_LEFT, SDLK_k, SDLK_l, SDL_KEYUP, SDLK_DOWN, SDLK_COMMA, SDLK_PERIOD, SDLK_UP, SDLK_SLASH
+from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDLK_RIGHT, SDLK_LEFT, SDLK_k, SDLK_l, SDL_KEYUP, SDLK_DOWN, SDLK_COMMA, SDLK_PERIOD, SDLK_UP, SDLK_SLASH
+from sdl2 import SDLK_a, SDLK_d, SDLK_w, SDLK_s, SDLK_f, SDLK_g, SDLK_v, SDLK_b
 
 import game_framework
 from state_machine import StateMachine
@@ -124,16 +125,16 @@ class Run:
         ]
 
     def enter(self, e):
-        if right_down(e):
+        if self.ryu.right_down(e):
             self.ryu.dir = self.ryu.face_dir = 1
-        elif left_down(e):
+        elif self.ryu.left_down(e):
             self.ryu.dir = self.ryu.face_dir = -1
-        elif right_up(e) or left_up(e):
+        elif self.ryu.right_up(e) or self.ryu.left_up(e):
             self.ryu.dir = self.ryu.face_dir = 0
         self.ryu.frame = 0.0
 
     def exit(self, e):
-        if space_down(e):
+        if self.ryu.space_down(e) and hasattr(self.ryu, "fire_ball"):
             self.ryu.fire_ball()
 
     def do(self):
@@ -169,16 +170,16 @@ class Normal_Attack:
         self.ryu.frame = 0.0
         sdl = e[1]
         if sdl and sdl.type == SDL_KEYDOWN:
-            if sdl.key == SDLK_k:
+            if sdl.key == self.ryu.keymap.get('K'):
                 self.attack_type = 'P_L'
                 self.action_per_time = ACTION_PER_TIME_ATTACK_L
-            elif sdl.key == SDLK_l:
+            elif sdl.key == self.ryu.keymap.get('L'):
                 self.attack_type = 'P_H'
                 self.action_per_time = ACTION_PER_TIME_ATTACK_H * 0.7
-            elif sdl.key == SDLK_COMMA:
+            elif sdl.key == self.ryu.keymap.get('COMMA'):
                 self.attack_type = 'K_L'
                 self.action_per_time = ACTION_PER_TIME_ATTACK_COMMA
-            elif sdl.key == SDLK_PERIOD:
+            elif sdl.key == self.ryu.keymap.get('PERIOD'):
                 self.attack_type = 'K_H'
                 self.action_per_time = ACTION_PER_TIME_ATTACK_PERIOD
     def exit(self, e):
@@ -226,20 +227,20 @@ class Crouch_Attack:
     def enter(self, e):
         self.ryu.is_attacking = True
         self.ryu._hit_targets.clear()
-        self.ryu.dir = 0
         self.ryu.frame = 0.0
+        self.frame = 0.0
         sdl = e[1]
         if sdl and sdl.type == SDL_KEYDOWN:
-            if sdl.key == SDLK_k:
+            if sdl.key == self.ryu.keymap.get('K'):
                 self.attack_type = 'P_L'
                 self.action_per_time = ACTION_PER_TIME_ATTACK_L
-            elif sdl.key == SDLK_l:
+            elif sdl.key == self.ryu.keymap.get('L'):
                 self.attack_type = 'P_H'
-                self.action_per_time = ACTION_PER_TIME_ATTACK_H
-            elif sdl.key == SDLK_COMMA:
+                self.action_per_time = ACTION_PER_TIME_ATTACK_H * 0.7
+            elif sdl.key == self.ryu.keymap.get('COMMA'):
                 self.attack_type = 'K_L'
                 self.action_per_time = ACTION_PER_TIME_ATTACK_COMMA
-            elif sdl.key == SDLK_PERIOD:
+            elif sdl.key == self.ryu.keymap.get('PERIOD'):
                 self.attack_type = 'K_H'
                 self.action_per_time = ACTION_PER_TIME_ATTACK_PERIOD
 
@@ -293,14 +294,18 @@ class Jump_Attack:
 
         sdl = e[1] if e and len(e) > 1 else None
         if sdl and sdl.type == SDL_KEYDOWN:
-            if sdl.key == SDLK_k:
-                self.attack_type = 'P_L'; self.action_per_time = ACTION_PER_TIME_ATTACK_L
-            elif sdl.key == SDLK_l:
-                self.attack_type = 'P_H'; self.action_per_time = ACTION_PER_TIME_ATTACK_H
-            elif sdl.key == SDLK_COMMA:
-                self.attack_type = 'K_L'; self.action_per_time = ACTION_PER_TIME_ATTACK_COMMA
-            elif sdl.key == SDLK_PERIOD:
-                self.attack_type = 'K_H'; self.action_per_time = ACTION_PER_TIME_ATTACK_PERIOD
+            if sdl.key == self.ryu.keymap.get('K'):
+                self.attack_type = 'P_L'
+                self.action_per_time = ACTION_PER_TIME_ATTACK_L
+            elif sdl.key == self.ryu.keymap.get('L'):
+                self.attack_type = 'P_H'
+                self.action_per_time = ACTION_PER_TIME_ATTACK_H * 0.7
+            elif sdl.key == self.ryu.keymap.get('COMMA'):
+                self.attack_type = 'K_L'
+                self.action_per_time = ACTION_PER_TIME_ATTACK_COMMA
+            elif sdl.key == self.ryu.keymap.get('PERIOD'):
+                self.attack_type = 'K_H'
+                self.action_per_time = ACTION_PER_TIME_ATTACK_PERIOD
 
     def exit(self, e):
         self.ryu.is_attacking = False
@@ -499,14 +504,18 @@ class Jump_Diag_Attack:
         # 어떤 공격인지 결정 (+ 속도)
         sdl = e[1] if e and len(e) > 1 else None
         if sdl and sdl.type == SDL_KEYDOWN:
-            if sdl.key == SDLK_k:
-                self.attack_type = 'P_L'; self.action_per_time = ACTION_PER_TIME_ATTACK_L
-            elif sdl.key == SDLK_l:
-                self.attack_type = 'P_H'; self.action_per_time = ACTION_PER_TIME_ATTACK_H
-            elif sdl.key == SDLK_COMMA:
-                self.attack_type = 'K_L'; self.action_per_time = ACTION_PER_TIME_ATTACK_COMMA
-            elif sdl.key == SDLK_PERIOD:
-                self.attack_type = 'K_H'; self.action_per_time = ACTION_PER_TIME_ATTACK_PERIOD
+            if sdl.key == self.ryu.keymap.get('K'):
+                self.attack_type = 'P_L'
+                self.action_per_time = ACTION_PER_TIME_ATTACK_L
+            elif sdl.key == self.ryu.keymap.get('L'):
+                self.attack_type = 'P_H'
+                self.action_per_time = ACTION_PER_TIME_ATTACK_H * 0.7
+            elif sdl.key == self.ryu.keymap.get('COMMA'):
+                self.attack_type = 'K_L'
+                self.action_per_time = ACTION_PER_TIME_ATTACK_COMMA
+            elif sdl.key == self.ryu.keymap.get('PERIOD'):
+                self.attack_type = 'K_H'
+                self.action_per_time = ACTION_PER_TIME_ATTACK_PERIOD
         if self.attack_type is None:
             self.attack_type = 'P_L'
 
@@ -550,7 +559,8 @@ class Jump_Diag_Attack:
 
 
 class Ryu:
-    def __init__(self):
+    def __init__(self, player=1):
+        self.player = player
         self.x, self.y = 0, 90
         self.frame = 0
         self.face_dir = 1
@@ -561,6 +571,37 @@ class Ryu:
         self.max_hp = 100
         self.hp = 100
         self.select = 0
+
+        if self.player == 1:
+            self.keymap = {
+                'LEFT': SDLK_LEFT, 'RIGHT': SDLK_RIGHT, 'UP': SDLK_UP, 'DOWN': SDLK_DOWN,
+                'K': SDLK_k, 'L': SDLK_l, 'COMMA': SDLK_COMMA, 'PERIOD': SDLK_PERIOD,
+                'SPACE': SDLK_SPACE, 'SLASH': SDLK_SLASH
+            }
+        else:
+            self.keymap = {
+                'LEFT': SDLK_a, 'RIGHT': SDLK_d, 'UP': SDLK_w, 'DOWN': SDLK_s,
+                'K': SDLK_f, 'L': SDLK_g, 'COMMA': SDLK_v, 'PERIOD': SDLK_b,
+                'SPACE': SDLK_SPACE, 'SLASH': SDLK_SLASH
+            }
+
+        self.time_out = lambda e: e[0] == 'TIMEOUT'
+        self.space_down = lambda e: e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == self.keymap['SPACE']
+        self.right_down = lambda e: e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == self.keymap['RIGHT']
+        self.right_up = lambda e: e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == self.keymap['RIGHT']
+        self.left_down = lambda e: e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == self.keymap['LEFT']
+        self.left_up = lambda e: e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == self.keymap['LEFT']
+        self.k_down = lambda e: e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == self.keymap['K']
+        self.l_down = lambda e: e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == self.keymap['L']
+        self.end_attack = lambda e: e[0] == 'END_ATTACK'
+        self.down_down = lambda e: e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == self.keymap['DOWN']
+        self.down_up = lambda e: e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == self.keymap['DOWN']
+        self.comma_down = lambda e: e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == self.keymap['COMMA']
+        self.period_down = lambda e: e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == self.keymap['PERIOD']
+        self.up_down = lambda e: e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == self.keymap['UP']
+        self.land = lambda e: e[0] == 'LAND'
+        self.hit = lambda e: e[0] == 'HIT'
+        self.end_hit = lambda e: e[0] == 'END_HIT'
 
         self.IDLE = Idle(self)
         self.RUN = Run(self)
@@ -575,72 +616,52 @@ class Ryu:
         self.is_attacking = False
         self._hit_targets = set()
 
-
         self.state_machine = StateMachine(
             self.IDLE,
             {
                 self.IDLE: {
-                    right_down: self.RUN, left_down: self.RUN,
-                    right_up: self.RUN, left_up: self.RUN,
-                    k_down: self.ATTACK,  # 약손 입력 → 공격 상태 전환
-                    l_down: self.ATTACK,  # 강손 입력 → 공격 상태 전환
-                    comma_down: self.ATTACK,
-                    period_down: self.ATTACK,
-                    down_down: self.SIT,
-                    up_down: self.JUMP,
+                    self.right_down: self.RUN, self.left_down: self.RUN,
+                    self.right_up: self.RUN, self.left_up: self.RUN,
+                    self.k_down: self.ATTACK, self.l_down: self.ATTACK,
+                    self.comma_down: self.ATTACK, self.period_down: self.ATTACK,
+                    self.down_down: self.SIT, self.up_down: self.JUMP,
                 },
                 self.RUN: {
-                    right_up: self.IDLE, left_up: self.IDLE,
-                    k_down: self.ATTACK,
-                    l_down: self.ATTACK,
-                    comma_down: self.ATTACK,
-                    period_down: self.ATTACK,
-                    up_down: self.JUMP_DIAG,
+                    self.right_up: self.IDLE, self.left_up: self.IDLE,
+                    self.k_down: self.ATTACK, self.l_down: self.ATTACK,
+                    self.comma_down: self.ATTACK, self.period_down: self.ATTACK,
+                    self.up_down: self.JUMP_DIAG,
                 },
-                self.ATTACK: {
-                    end_attack: self.IDLE
-                },
+                self.ATTACK: {self.end_attack: self.IDLE},
                 self.SIT: {
-                    k_down: self.CROUCH_ATTACK,
-                    l_down: self.CROUCH_ATTACK,
-                    comma_down: self.CROUCH_ATTACK,
-                    period_down: self.CROUCH_ATTACK,
-                    down_up: self.IDLE,
+                    self.k_down: self.CROUCH_ATTACK, self.l_down: self.CROUCH_ATTACK,
+                    self.comma_down: self.CROUCH_ATTACK, self.period_down: self.CROUCH_ATTACK,
+                    self.down_up: self.IDLE,
                 },
                 self.CROUCH_ATTACK: {
-                    k_down: self.CROUCH_ATTACK,
-                    l_down: self.CROUCH_ATTACK,
-                    comma_down: self.CROUCH_ATTACK,
-                    period_down: self.CROUCH_ATTACK,
-                    end_attack: self.SIT,
+                    self.k_down: self.CROUCH_ATTACK, self.l_down: self.CROUCH_ATTACK,
+                    self.comma_down: self.CROUCH_ATTACK, self.period_down: self.CROUCH_ATTACK,
+                    self.end_attack: self.SIT,
                 },
                 self.JUMP: {
-                    k_down: self.JUMP_ATTACK,
-                    l_down: self.JUMP_ATTACK,
-                    comma_down: self.JUMP_ATTACK,
-                    period_down: self.JUMP_ATTACK,
-                    land: self.IDLE,
+                    self.k_down: self.JUMP_ATTACK, self.l_down: self.JUMP_ATTACK,
+                    self.comma_down: self.JUMP_ATTACK, self.period_down: self.JUMP_ATTACK,
+                    self.land: self.IDLE,
                 },
                 self.JUMP_DIAG: {
-                    k_down: self.JUMP_DIAG_ATTACK,
-                    l_down: self.JUMP_DIAG_ATTACK,
-                    comma_down: self.JUMP_DIAG_ATTACK,
-                    period_down: self.JUMP_DIAG_ATTACK,
-                    land: self.IDLE,
+                    self.k_down: self.JUMP_DIAG_ATTACK, self.l_down: self.JUMP_DIAG_ATTACK,
+                    self.comma_down: self.JUMP_DIAG_ATTACK, self.period_down: self.JUMP_DIAG_ATTACK,
+                    self.land: self.IDLE,
                 },
                 self.JUMP_DIAG_ATTACK: {
-                    k_down: self.JUMP_DIAG_ATTACK,
-                    l_down: self.JUMP_DIAG_ATTACK,
-                    comma_down: self.JUMP_DIAG_ATTACK,
-                    period_down: self.JUMP_DIAG_ATTACK,
-                    land: self.IDLE,
+                    self.k_down: self.JUMP_DIAG_ATTACK, self.l_down: self.JUMP_DIAG_ATTACK,
+                    self.comma_down: self.JUMP_DIAG_ATTACK, self.period_down: self.JUMP_DIAG_ATTACK,
+                    self.land: self.IDLE,
                 },
                 self.JUMP_ATTACK: {
-                    k_down: self.JUMP_ATTACK,
-                    l_down: self.JUMP_ATTACK,
-                    comma_down: self.JUMP_ATTACK,
-                    period_down: self.JUMP_ATTACK,
-                    land: self.IDLE,
+                    self.k_down: self.JUMP_ATTACK, self.l_down: self.JUMP_ATTACK,
+                    self.comma_down: self.JUMP_ATTACK, self.period_down: self.JUMP_ATTACK,
+                    self.land: self.IDLE,
                 },
             }
         )

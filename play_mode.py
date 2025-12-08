@@ -26,14 +26,14 @@ def handle_events():
 def init():
     global p1, p2, map, countdown, round_fight, hp_bar, hp_bar2
     if selected_p1 == 'Ryu' or selected_p1 is None:
-        p1 = Ryu()
+        p1 = Ryu(player=1)
     elif selected_p1 == 'Ken':
-        p1 = Ken()
+        p1 = Ken(player=1)
 
     if selected_p2 == 'Ken' or selected_p2 is None:
-        p2 = Ken()
+        p2 = Ken(player=2)
     elif selected_p2 == 'Ryu':
-        p2 = Ryu()
+        p2 = Ryu(player=2)
 
     p1.select = 1
     p2.select = 2
