@@ -17,8 +17,6 @@ def handle_events():
     for event in event_list:
         if event.type == SDL_QUIT:
             game_framework.quit()
-        elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
-            game_framework.change_mode(select_mode)
         elif not round_fight.visible:  # ✅ 연출 중 아닐 때만 입력 전달
             p1.handle_event(event)
             p2.handle_event(event)
