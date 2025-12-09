@@ -180,6 +180,323 @@ class Hit:
             self.ken.image.clip_draw(sx, sy, sw, sh, draw_x, draw_y)
         else:
             self.ken.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h', draw_x, draw_y, sw, sh)
+class Normal_Attack:
+    def __init__(self, ken):
+        self.ken = ken
+        # 플레이스홀더: 실제 좌표로 교체하세요
+        self.attack_frames = {
+            'P_L': [ (0,0,60,90) ],
+            'P_H': [ (0,0,60,90) ],
+            'K_L': [ (0,0,60,90) ],
+            'K_H': [ (0,0,60,90) ],
+        }
+        self.attack_type = None
+        self.frame = 0.0
+        self.action_per_time = 1.0
+
+    def enter(self, e):
+        self.ken.is_attacking = True
+        self.ken._hit_targets.clear()
+        self.ken.frame = 0.0
+        sdl = e[1] if e and len(e) > 1 else None
+        if sdl and sdl.type == SDL_KEYDOWN:
+            if sdl.key == self.ken.keymap.get('K'):
+                self.attack_type = 'P_L'; self.action_per_time = ACTION_PER_TIME_ATTACK_L
+            elif sdl.key == self.ken.keymap.get('L'):
+                self.attack_type = 'P_H'; self.action_per_time = ACTION_PER_TIME_ATTACK_H * 0.7
+            elif sdl.key == self.ken.keymap.get('COMMA'):
+                self.attack_type = 'K_L'; self.action_per_time = ACTION_PER_TIME_ATTACK_COMMA
+            elif sdl.key == self.ken.keymap.get('PERIOD'):
+                self.attack_type = 'K_H'; self.action_per_time = ACTION_PER_TIME_ATTACK_PERIOD
+
+    def exit(self, e):
+        self.ken.is_attacking = False
+
+    def do(self):
+        self.ken.frame += FRAMES_PER_ACTION_ATTACK * self.action_per_time * game_framework.frame_time
+        if int(self.ken.frame) >= len(self.attack_frames[self.attack_type]):
+            self.ken.state_machine.handle_state_event(('END_ATTACK', None))
+
+    def draw(self):
+        idx = min(int(self.ken.frame), len(self.attack_frames[self.attack_type]) - 1)
+        sx, sy, sw, sh = self.attack_frames[self.attack_type][idx]
+        base_w = self.attack_frames[self.attack_type][0][2]
+        dx = ((sw - base_w) * 0.5) * self.ken.face_dir
+        base_h = self.attack_frames[self.attack_type][0][3]
+        dy = (sh - base_h) * 0.5
+        draw_x = self.ken.x + dx
+        draw_y = self.ken.y + dy
+        self.ken.draw_sprite(sx, sy, sw, sh, draw_x, draw_y)
+
+class Crouch_Attack:
+    def __init__(self, ken):
+        self.ken = ken
+        # 플레이스홀더: 실제 좌표로 교체하세요
+        self.attack_frames = {
+            'P_L': [ (0,0,48,60) ],
+            'P_H': [ (0,0,48,60) ],
+            'K_L': [ (0,0,80,70) ],
+            'K_H': [ (0,0,35,70) ],
+        }
+        self.attack_type = None
+        self.action_per_time = 1.0
+        self.frame = 0.0
+        self.STAND_H = 92
+        self.SIT_H = 70
+
+    def enter(self, e):
+        self.ken.is_attacking = True
+        self.ken._hit_targets.clear()
+        self.ken.frame = 0.0
+        sdl = e[1] if e and len(e) > 1 else None
+        if sdl and sdl.type == SDL_KEYDOWN:
+            if sdl.key == self.ken.keymap.get('K'):
+                self.attack_type = 'P_L'; self.action_per_time = ACTION_PER_TIME_ATTACK_L
+            elif sdl.key == self.ken.keymap.get('L'):
+                self.attack_type = 'P_H'; self.action_per_time = ACTION_PER_TIME_ATTACK_H * 0.7
+            elif sdl.key == self.ken.keymap.get('COMMA'):
+                self.attack_type = 'K_L'; self.action_per_time = ACTION_PER_TIME_ATTACK_COMMA
+            elif sdl.key == self.ken.keymap.get('PERIOD'):
+                self.attack_type = 'K_H'; self.action_per_time = ACTION_PER_TIME_ATTACK_PERIOD
+
+    def exit(self, e):
+        self.ken.is_attacking = False
+
+    def do(self):
+        self.ken.frame += FRAMES_PER_ACTION_ATTACK * self.action_per_time * game_framework.frame_time
+        if int(self.ken.frame) >= len(self.attack_frames[self.attack_type]):
+            self.ken.state_machine.handle_state_event(('END_ATTACK', None))
+
+    def draw(self):
+        idx = min(int(self.ken.frame), len(self.attack_frames[self.attack_type]) - 1)
+        sx, sy, sw, sh = self.attack_frames[self.attack_type][idx]
+        base_w = self.attack_frames[self.attack_type][0][2]
+        dx = ((sw - base_w) * 0.5) * self.ken.face_dir
+        STAND_H = 92
+        draw_x = self.ken.x + dx
+        draw_y = (self.ken.y - STAND_H * 0.5) + sh * 0.5
+        self.ken.draw_sprite(sx, sy, sw, sh, draw_x, draw_y)
+
+class Jump:
+    def __init__(self, ken):
+        self.ken = ken
+        # 플레이스홀더
+        self.jump_quads = [ (0,0,48,100), (0,0,45,70) ]
+        self.yv = 0.0
+        self.ground_y = 0.0
+        self.frame = 0.0
+
+    def enter(self, e):
+        self.ground_y = self.ken.y
+        self.yv = JUMP_SPEED
+        self.frame = 0.0
+        self.ken.dir = 0
+
+    def exit(self, e):
+        pass
+
+    def do(self):
+        self.yv -= GRAVITY * game_framework.frame_time
+        self.ken.y += self.yv * game_framework.frame_time * PIXEL_PER_METER
+        self.frame = (self.frame + 2 * game_framework.frame_time) % 2
+        if self.ken.y <= self.ground_y:
+            self.ken.y = self.ground_y
+            self.ken.state_machine.handle_state_event(('LAND', None))
+
+    def draw(self):
+        idx = int(self.frame)
+        sx, sy, sw, sh = self.jump_quads[idx]
+        STAND_H = 92
+        head_anchor_y = self.ken.y + STAND_H * 0.5
+        draw_y = head_anchor_y - sh * 0.5
+        self.ken.draw_sprite(sx, sy, sw, sh, self.ken.x, draw_y)
+
+class Jump_Attack:
+    def __init__(self, ken):
+        self.ken = ken
+        # 플레이스홀더
+        self.attack_frames = {
+            'P_L': [ (0,0,69,63) ],
+            'P_H': [ (0,0,78,64) ],
+            'K_L': [ (0,0,45,87) ],
+            'K_H': [ (0,0,82,100) ],
+        }
+        self.attack_type = None
+        self.action_per_time = 1.0
+        self.frame = 0.0
+        self.yv = 0.0
+        self.ground_y = 0.0
+
+    def enter(self, e):
+        self.ken.is_attacking = True
+        self.ken._hit_targets.clear()
+        # 현재 점프 상태에서 정보 가져오기
+        self.yv = getattr(self.ken.JUMP, 'yv', JUMP_SPEED)
+        self.ground_y = getattr(self.ken.JUMP, 'ground_y', self.ken.y)
+        self.ken.dir = 0
+        self.ken.frame = 0.0
+        sdl = e[1] if e and len(e) > 1 else None
+        if sdl and sdl.type == SDL_KEYDOWN:
+            if sdl.key == self.ken.keymap.get('K'):
+                self.attack_type = 'P_L'; self.action_per_time = ACTION_PER_TIME_ATTACK_L
+            elif sdl.key == self.ken.keymap.get('L'):
+                self.attack_type = 'P_H'; self.action_per_time = ACTION_PER_TIME_ATTACK_H * 0.7
+            elif sdl.key == self.ken.keymap.get('COMMA'):
+                self.attack_type = 'K_L'; self.action_per_time = ACTION_PER_TIME_ATTACK_COMMA
+            elif sdl.key == self.ken.keymap.get('PERIOD'):
+                self.attack_type = 'K_H'; self.action_per_time = ACTION_PER_TIME_ATTACK_PERIOD
+
+    def exit(self, e):
+        self.ken.is_attacking = False
+
+    def do(self):
+        self.ken.frame += FRAMES_PER_ACTION_ATTACK * self.action_per_time * game_framework.frame_time
+        if int(self.ken.frame) >= len(self.attack_frames[self.attack_type]):
+            self.ken.frame = len(self.attack_frames[self.attack_type]) - 1
+        # 공중 물리
+        self.yv -= GRAVITY * game_framework.frame_time
+        self.ken.y += self.yv * game_framework.frame_time * PIXEL_PER_METER
+        if self.ken.y <= self.ground_y:
+            self.ken.y = self.ground_y
+            self.ken.state_machine.handle_state_event(('LAND', None))
+
+
+    def draw(self):
+        idx = min(int(self.ken.frame), len(self.attack_frames[self.attack_type]) - 1)
+        sx, sy, sw, sh = self.attack_frames[self.attack_type][idx]
+        base_w = self.attack_frames[self.attack_type][0][2]
+        dx = ((sw - base_w) * 0.5) * self.ken.face_dir
+        STAND_H = 92
+        draw_x = self.ken.x + dx
+        draw_y = (self.ken.y - STAND_H * 0.5) + sh * 0.5
+        self.ken.draw_sprite(sx, sy, sw, sh, draw_x, draw_y)
+
+class Jump_Diag:
+    def __init__(self, ken):
+        self.ken = ken
+        self.jump_quads = [ (0,0,48,100), (0,0,45,70) ]  # 플레이스홀더
+        self.yv = 0.0
+        self.vx = 0.0
+        self.ground_y = 0.0
+        self.frame = 0.0
+
+    def enter(self, e):
+        self.ground_y = self.ken.y
+        self.yv = JUMP_SPEED
+        dir_sign = self.ken.dir if self.ken.dir != 0 else (1 if self.ken.face_dir == 1 else -1)
+        self.vx = dir_sign * RUN_SPEED_PPS
+        self.frame = 0.0
+        self.ken.air_yv = self.yv
+        self.ken.air_vx = self.vx
+        self.ken.air_ground_y = self.ground_y
+
+    def exit(self, e):
+        pass
+
+    def do(self):
+        self.yv -= GRAVITY * game_framework.frame_time
+        self.ken.y += self.yv * game_framework.frame_time * PIXEL_PER_METER
+        self.ken.x += self.vx * game_framework.frame_time
+        self.frame = (self.frame + 2 * game_framework.frame_time) % 2
+        if self.ken.y <= self.ground_y:
+            self.ken.y = self.ground_y
+            self.ken.state_machine.handle_state_event(('LAND', None))
+
+    def draw(self):
+        idx = int(self.frame)
+        sx, sy, sw, sh = self.jump_quads[idx]
+        STAND_H = 92
+        head_anchor_y = self.ken.y + STAND_H * 0.5
+        draw_y = head_anchor_y - sh * 0.5
+        self.ken.draw_sprite(sx, sy, sw, sh, self.ken.x, draw_y)
+
+class Jump_Diag_Attack:
+    def __init__(self, ken):
+        self.ken = ken
+        # 플레이스홀더
+        self.attack_frames = {
+            'P_L': [ (0,0,69,63) ],
+            'P_H': [ (0,0,78,64) ],
+            'K_L': [ (0,0,45,87) ],
+            'K_H': [ (0,0,82,100) ],
+        }
+        self.attack_type = None
+        self.action_per_time = 1.0
+        self.frame = 0.0
+        self.yv = 0.0
+        self.vx = 0.0
+        self.ground_y = 0.0
+
+    def enter(self, e):
+        self.ken.is_attacking = True
+        self.ken._hit_targets.clear()
+        self.yv = getattr(self.ken, 'air_yv', JUMP_SPEED)
+        self.ground_y = getattr(self.ken, 'air_ground_y', self.ken.y)
+        dir_sign = self.ken.dir if self.ken.dir != 0 else (1 if self.ken.face_dir == 1 else -1)
+        self.vx = dir_sign * RUN_SPEED_PPS
+        self.ken.dir = 0
+        self.ken.frame = 0.0
+        sdl = e[1] if e and len(e) > 1 else None
+        if sdl and sdl.type == SDL_KEYDOWN:
+            if sdl.key == self.ken.keymap.get('K'):
+                self.attack_type = 'P_L'; self.action_per_time = ACTION_PER_TIME_ATTACK_L
+            elif sdl.key == self.ken.keymap.get('L'):
+                self.attack_type = 'P_H'; self.action_per_time = ACTION_PER_TIME_ATTACK_H * 0.7
+            elif sdl.key == self.ken.keymap.get('COMMA'):
+                self.attack_type = 'K_L'; self.action_per_time = ACTION_PER_TIME_ATTACK_COMMA
+            elif sdl.key == self.ken.keymap.get('PERIOD'):
+                self.attack_type = 'K_H'; self.action_per_time = ACTION_PER_TIME_ATTACK_PERIOD
+        if self.attack_type is None:
+            self.attack_type = 'P_L'
+
+    def exit(self, e):
+        self.ken.is_attacking = False
+
+    def do(self):
+        self.ken.frame += FRAMES_PER_ACTION_ATTACK * self.action_per_time * game_framework.frame_time
+        if int(self.ken.frame) >= len(self.attack_frames[self.attack_type]):
+            self.ken.frame = len(self.attack_frames[self.attack_type]) - 1
+        self.yv -= GRAVITY * game_framework.frame_time
+        self.ken.y += self.yv * game_framework.frame_time * PIXEL_PER_METER
+        self.ken.x += self.vx * game_framework.frame_time
+        if self.ken.y <= self.ground_y:
+            self.ken.y = self.ground_y
+            self.ken.state_machine.handle_state_event(('LAND', None))
+
+    def draw(self):
+        idx = min(int(self.ken.frame), len(self.attack_frames[self.attack_type]) - 1)
+        sx, sy, sw, sh = self.attack_frames[self.attack_type][idx]
+        base_w = self.attack_frames[self.attack_type][0][2]
+        dx = ((sw - base_w) * 0.5) * self.ken.face_dir
+        STAND_H = 92
+        draw_x = self.ken.x + dx
+        draw_y = (self.ken.y - STAND_H * 0.5) + sh * 0.5
+        self.ken.draw_sprite(sx, sy, sw, sh, draw_x, draw_y)
+
+class Sit:
+    def __init__(self, ken):
+        self.ken = ken
+        # 플레이스홀더
+        self.quads = [ (0,0,45,70), (0,0,47,70) ]
+        self.lock_delay = 0.08
+        self.t0 = 0.0
+
+    def enter(self, e):
+        self.ken.dir = 0
+        self.t0 = get_time()
+
+    def exit(self, e):
+        pass
+
+    def do(self):
+        pass
+
+    def draw(self):
+        idx = 0 if (get_time() - self.t0) < self.lock_delay else 1
+        sx, sy, sw, sh = self.quads[idx]
+        STAND_H = 92
+        draw_y = (self.ken.y - STAND_H * 0.5) + sh * 0.5
+        self.ken.draw_sprite(sx, sy, sw, sh, self.ken.x, draw_y)
 
 
 class Ken:

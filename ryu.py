@@ -327,7 +327,7 @@ class Jump_Attack:
         sx, sy, sw, sh = self.attack_frames[self.attack_type][idx]
 
         base_w = self.attack_frames[self.attack_type][0][2]
-        dx = ((sw - base_w) * 0.5) * self.ryu.face_dir 
+        dx = ((sw - base_w) * 0.5) * self.ryu.face_dir
 
         STAND_H = 92
         draw_x = self.ryu.x + dx
