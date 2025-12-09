@@ -288,7 +288,7 @@ class Jump:
     def __init__(self, ken):
         self.ken = ken
         # 플레이스홀더
-        self.jump_quads = [ (0,0,48,100), (0,0,45,70) ]
+        self.jump_quads = [ (128,833,31,94), (72,833,45,86) ]
         self.yv = 0.0
         self.ground_y = 0.0
         self.frame = 0.0
@@ -387,7 +387,7 @@ class Jump_Attack:
 class Jump_Diag:
     def __init__(self, ken):
         self.ken = ken
-        self.jump_quads = [ (0,0,48,100), (0,0,45,70) ]  # 플레이스홀더
+        self.jump_quads = [ (128,833,31,94), (72,833,45,86)  ]  # 플레이스홀더
         self.yv = 0.0
         self.vx = 0.0
         self.ground_y = 0.0
@@ -496,7 +496,7 @@ class Sit:
     def __init__(self, ken):
         self.ken = ken
         # 플레이스홀더
-        self.quads = [ (0,0,45,70), (0,0,47,70) ]
+        self.quads = [ (8,744,45,80), (64,744,47,63) ]
         self.lock_delay = 0.08
         self.t0 = 0.0
 
@@ -589,6 +589,7 @@ class Ken:
                     self.k_down: self.ATTACK, self.l_down: self.ATTACK,
                     self.comma_down: self.ATTACK, self.period_down: self.ATTACK,
                     self.down_down: self.SIT, self.up_down: self.JUMP,
+                    self.hit: self.HIT,
                 },
                 self.RUN: {
                     self.right_up: self.IDLE, self.left_up: self.IDLE,
@@ -661,5 +662,6 @@ class Ken:
         self.hp -= amount
         if self.hp < 0:
             self.hp = 0
-        if getattr(self, 'state_machine', None) and getattr(self.state_machine, 'cur_state', None) is not getattr(self,'HIT',None):
-            self.state_machine.handle_state_event(('HIT', None))
+        if getattr(self, 'HIT', None) is not None and getattr(self, 'state_machine', None):
+            if getattr(self.state_machine, 'cur_state', None) is not self.HIT:
+                self.state_machine.handle_state_event(('HIT', None))
