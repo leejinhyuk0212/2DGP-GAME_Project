@@ -180,6 +180,7 @@ class Hit:
             self.ken.image.clip_draw(sx, sy, sw, sh, draw_x, draw_y)
         else:
             self.ken.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h', draw_x, draw_y, sw, sh)
+
 class Normal_Attack:
     def __init__(self, ken):
         self.ken = ken
@@ -226,7 +227,10 @@ class Normal_Attack:
         dy = (sh - base_h) * 0.5
         draw_x = self.ken.x + dx
         draw_y = self.ken.y + dy
-        self.ken.draw_sprite(sx, sy, sw, sh, draw_x, draw_y)
+        if self.ken.state == 'left':
+            self.ken.image.clip_draw(sx, sy, sw, sh, draw_x, draw_y)
+        else:
+            self.ken.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h', draw_x, draw_y, sw, sh)
 
 class Crouch_Attack:
     def __init__(self, ken):
@@ -275,7 +279,10 @@ class Crouch_Attack:
         STAND_H = 92
         draw_x = self.ken.x + dx
         draw_y = (self.ken.y - STAND_H * 0.5) + sh * 0.5
-        self.ken.draw_sprite(sx, sy, sw, sh, draw_x, draw_y)
+        if self.ken.state == 'left':
+            self.ken.image.clip_draw(sx, sy, sw, sh, draw_x, draw_y)
+        else:
+            self.ken.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h', draw_x, draw_y, sw, sh)
 
 class Jump:
     def __init__(self, ken):
@@ -309,7 +316,10 @@ class Jump:
         STAND_H = 92
         head_anchor_y = self.ken.y + STAND_H * 0.5
         draw_y = head_anchor_y - sh * 0.5
-        self.ken.draw_sprite(sx, sy, sw, sh, self.ken.x, draw_y)
+        if self.ken.state == 'left':
+            self.ken.image.clip_draw(sx, sy, sw, sh, self.ken.x, draw_y)
+        else:
+            self.ken.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h', self.ken.x, draw_y, sw, sh)
 
 class Jump_Attack:
     def __init__(self, ken):
@@ -369,7 +379,10 @@ class Jump_Attack:
         STAND_H = 92
         draw_x = self.ken.x + dx
         draw_y = (self.ken.y - STAND_H * 0.5) + sh * 0.5
-        self.ken.draw_sprite(sx, sy, sw, sh, draw_x, draw_y)
+        if self.ken.state == 'left':
+            self.ken.image.clip_draw(sx, sy, sw, sh, draw_x, draw_y)
+        else:
+            self.ken.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h', draw_x, draw_y, sw, sh)
 
 class Jump_Diag:
     def __init__(self, ken):
@@ -408,7 +421,10 @@ class Jump_Diag:
         STAND_H = 92
         head_anchor_y = self.ken.y + STAND_H * 0.5
         draw_y = head_anchor_y - sh * 0.5
-        self.ken.draw_sprite(sx, sy, sw, sh, self.ken.x, draw_y)
+        if self.ken.state == 'left':
+            self.ken.image.clip_draw(sx, sy, sw, sh, self.ken.x, draw_y)
+        else:
+            self.ken.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h', self.ken.x, draw_y, sw, sh)
 
 class Jump_Diag_Attack:
     def __init__(self, ken):
@@ -471,7 +487,10 @@ class Jump_Diag_Attack:
         STAND_H = 92
         draw_x = self.ken.x + dx
         draw_y = (self.ken.y - STAND_H * 0.5) + sh * 0.5
-        self.ken.draw_sprite(sx, sy, sw, sh, draw_x, draw_y)
+        if self.ken.state == 'left':
+            self.ken.image.clip_draw(sx, sy, sw, sh, draw_x, draw_y)
+        else:
+            self.ken.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h', draw_x, draw_y, sw, sh)
 
 class Sit:
     def __init__(self, ken):
@@ -496,7 +515,10 @@ class Sit:
         sx, sy, sw, sh = self.quads[idx]
         STAND_H = 92
         draw_y = (self.ken.y - STAND_H * 0.5) + sh * 0.5
-        self.ken.draw_sprite(sx, sy, sw, sh, self.ken.x, draw_y)
+        if self.ken.state == 'left':
+            self.ken.image.clip_draw(sx, sy, sw, sh, self.ken.x, draw_y)
+        else:
+            self.ken.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h', self.ken.x, draw_y, sw, sh)
 
 
 class Ken:
@@ -546,6 +568,13 @@ class Ken:
 
         self.IDLE = Idle(self)
         self.RUN = Run(self)
+        self.ATTACK = Normal_Attack(self)
+        self.SIT = Sit(self)
+        self.JUMP = Jump(self)
+        self.CROUCH_ATTACK = Crouch_Attack(self)
+        self.JUMP_ATTACK = Jump_Attack(self)
+        self.JUMP_DIAG = Jump_Diag(self)
+        self.JUMP_DIAG_ATTACK = Jump_Diag_Attack(self)
         self.HIT = Hit(self)
 
         self.is_attacking = False
@@ -557,14 +586,47 @@ class Ken:
                 self.IDLE: {
                     self.right_down: self.RUN, self.left_down: self.RUN,
                     self.right_up: self.RUN, self.left_up: self.RUN,
-                    self.hit: self.HIT,
+                    self.k_down: self.ATTACK, self.l_down: self.ATTACK,
+                    self.comma_down: self.ATTACK, self.period_down: self.ATTACK,
+                    self.down_down: self.SIT, self.up_down: self.JUMP,
                 },
                 self.RUN: {
                     self.right_up: self.IDLE, self.left_up: self.IDLE,
+                    self.k_down: self.ATTACK, self.l_down: self.ATTACK,
+                    self.comma_down: self.ATTACK, self.period_down: self.ATTACK,
+                    self.up_down: self.JUMP_DIAG,
                 },
-                self.HIT: {
-                    self.end_hit: self.IDLE,
-                }
+                self.ATTACK: {self.end_attack: self.IDLE},
+                self.SIT: {
+                    self.k_down: self.CROUCH_ATTACK, self.l_down: self.CROUCH_ATTACK,
+                    self.comma_down: self.CROUCH_ATTACK, self.period_down: self.CROUCH_ATTACK,
+                    self.down_up: self.IDLE,
+                },
+                self.CROUCH_ATTACK: {
+                    self.k_down: self.CROUCH_ATTACK, self.l_down: self.CROUCH_ATTACK,
+                    self.comma_down: self.CROUCH_ATTACK, self.period_down: self.CROUCH_ATTACK,
+                    self.end_attack: self.SIT,
+                },
+                self.JUMP: {
+                    self.k_down: self.JUMP_ATTACK, self.l_down: self.JUMP_ATTACK,
+                    self.comma_down: self.JUMP_ATTACK, self.period_down: self.JUMP_ATTACK,
+                    self.land: self.IDLE,
+                },
+                self.JUMP_DIAG: {
+                    self.k_down: self.JUMP_DIAG_ATTACK, self.l_down: self.JUMP_DIAG_ATTACK,
+                    self.comma_down: self.JUMP_DIAG_ATTACK, self.period_down: self.JUMP_DIAG_ATTACK,
+                    self.land: self.IDLE,
+                },
+                self.JUMP_DIAG_ATTACK: {
+                    self.k_down: self.JUMP_DIAG_ATTACK, self.l_down: self.JUMP_DIAG_ATTACK,
+                    self.comma_down: self.JUMP_DIAG_ATTACK, self.period_down: self.JUMP_DIAG_ATTACK,
+                    self.land: self.IDLE,
+                },
+                self.JUMP_ATTACK: {
+                    self.k_down: self.JUMP_ATTACK, self.l_down: self.JUMP_ATTACK,
+                    self.comma_down: self.JUMP_ATTACK, self.period_down: self.JUMP_ATTACK,
+                    self.land: self.IDLE,
+                },
             }
         )
 
