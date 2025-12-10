@@ -531,7 +531,7 @@ class Sit:
 class Dead:
     def __init__(self, ken):
         self.ken = ken
-        self.quads = [(200, 128, 48, 62), (272, 128, 103, 31)]
+        self.quads = [(200, 128, 63, 62), (272, 128, 103, 31)]
         self.duration = 2.0
         self.t = 0.0
 
@@ -563,7 +563,7 @@ class Dead:
 class Guard:
     def __init__(self, fighter):
         self.fighter = fighter
-        self.quad = (8, 904, 45, 70)
+        self.quad = (392, 640, 56, 92)
 
     def enter(self, e):
         self.fighter.is_guarding = True
@@ -632,7 +632,7 @@ class Ken:
         self.end_hit = lambda e: e[0] == 'END_HIT'
         self.dead = lambda e: e[0] == 'DEAD'
         self.block_down = lambda e: e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == self.keymap['BLOCK']
-        self.block_up = lambda e: e[0] == 'INPUT'
+        self.block_up = lambda e: e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == self.keymap['BLOCK']
 
         self.IDLE = Idle(self)
         self.RUN = Run(self)

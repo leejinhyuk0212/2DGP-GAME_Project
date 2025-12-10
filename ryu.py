@@ -620,7 +620,7 @@ class Dead:
 class Guard:
     def __init__(self, fighter):
         self.fighter = fighter
-        self.quad = (8, 904, 45, 70)
+        self.quad = (392, 800, 56, 93,)
 
     def enter(self, e):
         self.fighter.is_guarding = True
