@@ -523,12 +523,10 @@ class Jump_Diag_Attack:
         self.ryu.is_attacking = False
 
     def do(self):
-        # 애니메이션 진행(끝 프레임에서 고정)
         self.ryu.frame += FRAMES_PER_ACTION_ATTACK * self.action_per_time * game_framework.frame_time
         if int(self.ryu.frame) >= len(self.attack_frames[self.attack_type]):
             self.ryu.frame = len(self.attack_frames[self.attack_type]) - 1
 
-        # 공중 물리: 세로/가로 이동
         self.yv -= GRAVITY * game_framework.frame_time
         self.ryu.y += self.yv * game_framework.frame_time * PIXEL_PER_METER
         self.ryu.x += self.vx * game_framework.frame_time
@@ -554,8 +552,67 @@ class Jump_Diag_Attack:
             self.ryu.image.clip_draw(sx, sy, sw, sh, draw_x, draw_y)
         else:
             self.ryu.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h', draw_x, draw_y, sw, sh)
+class Hit:
+    def __init__(self, ryu):
+        self.ryu = ryu
+        self.quad = (8, 128, 63, 91)  # 단순 예: idle 프레임 재사용
+        self.duration = 0.25
+        self.t = 0.0
 
+    def enter(self, e):
+        self.t = 0.0
+        self.ryu.dir = 0
+        if (self.ryu.state == 'left'):
+            self.ryu.x -= 10
+        else :
+            self.ryu.x += 10
 
+    def exit(self, e):
+        pass
+
+    def do(self):
+        self.t += game_framework.frame_time
+        if self.t >= self.duration:
+            self.ryu.state_machine.handle_state_event(('END_HIT', None))
+
+    def draw(self):
+        sx, sy, sw, sh = self.quad
+        draw_x = self.ryu.x
+        draw_y = self.ryu.y
+        if self.ryu.state == 'left':
+            self.ryu.image.clip_draw(sx, sy, sw, sh, draw_x, draw_y)
+        else:
+            self.ryu.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h', draw_x, draw_y, sw, sh)
+            
+
+class Dead:
+    def __init__(self, ryu):
+        self.ryu = ryu
+        self.quad = (328, 936, 48, 94)
+        self.duration = 1.0
+        self.t = 0.0
+
+    def enter(self, e):
+        self.t = 0.0
+        self.ryu.dir = 0
+        self.ryu.frame = 0.0
+
+    def exit(self, e):
+        pass
+
+    def do(self):
+        self.t += game_framework.frame_time
+        if self.t >= self.duration:
+            game_framework.quit()
+
+    def draw(self):
+        sx, sy, sw, sh = self.quad
+        draw_x = self.ryu.x
+        draw_y = self.ryu.y
+        if self.ryu.state == 'left':
+            self.ryu.image.clip_draw(sx, sy, sw, sh, draw_x, draw_y)
+        else:
+            self.ryu.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h', draw_x, draw_y, sw, sh)
 
 
 class Ryu:
@@ -602,6 +659,7 @@ class Ryu:
         self.land = lambda e: e[0] == 'LAND'
         self.hit = lambda e: e[0] == 'HIT'
         self.end_hit = lambda e: e[0] == 'END_HIT'
+        self.dead = lambda e: e[0] == 'DEAD'
 
         self.IDLE = Idle(self)
         self.RUN = Run(self)
@@ -612,6 +670,8 @@ class Ryu:
         self.JUMP_ATTACK = Jump_Attack(self)
         self.JUMP_DIAG = Jump_Diag(self)
         self.JUMP_DIAG_ATTACK = Jump_Diag_Attack(self)
+        self.HIT = Hit(self)
+        self.DEAD = Dead(self)
 
         self.is_attacking = False
         self._hit_targets = set()
@@ -625,43 +685,49 @@ class Ryu:
                     self.k_down: self.ATTACK, self.l_down: self.ATTACK,
                     self.comma_down: self.ATTACK, self.period_down: self.ATTACK,
                     self.down_down: self.SIT, self.up_down: self.JUMP,
+                    self.hit: self.HIT, self.dead: self.DEAD,
                 },
                 self.RUN: {
                     self.right_up: self.IDLE, self.left_up: self.IDLE,
                     self.k_down: self.ATTACK, self.l_down: self.ATTACK,
                     self.comma_down: self.ATTACK, self.period_down: self.ATTACK,
-                    self.up_down: self.JUMP_DIAG,
+                    self.up_down: self.JUMP_DIAG, self.hit: self.HIT, self.dead: self.DEAD,
                 },
                 self.ATTACK: {self.end_attack: self.IDLE},
                 self.SIT: {
                     self.k_down: self.CROUCH_ATTACK, self.l_down: self.CROUCH_ATTACK,
                     self.comma_down: self.CROUCH_ATTACK, self.period_down: self.CROUCH_ATTACK,
-                    self.down_up: self.IDLE,
+                    self.down_up: self.IDLE, self.hit: self.HIT, self.dead: self.DEAD,
                 },
                 self.CROUCH_ATTACK: {
                     self.k_down: self.CROUCH_ATTACK, self.l_down: self.CROUCH_ATTACK,
                     self.comma_down: self.CROUCH_ATTACK, self.period_down: self.CROUCH_ATTACK,
-                    self.end_attack: self.SIT,
+                    self.end_attack: self.SIT, self.hit: self.HIT, self.dead: self.DEAD,
                 },
                 self.JUMP: {
                     self.k_down: self.JUMP_ATTACK, self.l_down: self.JUMP_ATTACK,
                     self.comma_down: self.JUMP_ATTACK, self.period_down: self.JUMP_ATTACK,
-                    self.land: self.IDLE,
+                    self.land: self.IDLE, self.hit: self.HIT, self.dead: self.DEAD,
                 },
                 self.JUMP_DIAG: {
                     self.k_down: self.JUMP_DIAG_ATTACK, self.l_down: self.JUMP_DIAG_ATTACK,
                     self.comma_down: self.JUMP_DIAG_ATTACK, self.period_down: self.JUMP_DIAG_ATTACK,
-                    self.land: self.IDLE,
+                    self.land: self.IDLE, self.hit: self.HIT, self.dead: self.DEAD,
                 },
                 self.JUMP_DIAG_ATTACK: {
                     self.k_down: self.JUMP_DIAG_ATTACK, self.l_down: self.JUMP_DIAG_ATTACK,
                     self.comma_down: self.JUMP_DIAG_ATTACK, self.period_down: self.JUMP_DIAG_ATTACK,
-                    self.land: self.IDLE,
+                    self.land: self.IDLE, self.dead: self.DEAD,
                 },
                 self.JUMP_ATTACK: {
                     self.k_down: self.JUMP_ATTACK, self.l_down: self.JUMP_ATTACK,
                     self.comma_down: self.JUMP_ATTACK, self.period_down: self.JUMP_ATTACK,
-                    self.land: self.IDLE,
+                    self.land: self.IDLE, self.hit: self.HIT, self.dead: self.DEAD,
+                },
+                self.HIT: {
+                    self.end_hit: self.IDLE, self.dead: self.DEAD,
+                },
+                self.DEAD: {
                 },
             }
         )
@@ -701,7 +767,7 @@ class Ryu:
         self.hp -= amount
         if self.hp < 0:
             self.hp = 0
-            game_framework.quit()
-            return
+            if getattr(self, 'state_machine', None) and getattr(self.state_machine, 'cur_state', None) is not getattr(self, 'DEAD', None):
+                self.state_machine.handle_state_event(('DEAD', None))
         if getattr(self, 'state_machine', None) and getattr(self.state_machine, 'cur_state', None) is not getattr(self,'HIT',None):
             self.state_machine.handle_state_event(('HIT', None))
