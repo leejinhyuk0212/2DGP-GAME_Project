@@ -555,7 +555,7 @@ class Jump_Diag_Attack:
 class Hit:
     def __init__(self, ryu):
         self.ryu = ryu
-        self.quad = (8, 128, 63, 91)  # 단순 예: idle 프레임 재사용
+        self.quad = (8, 497, 60, 88)  # 단순 예: idle 프레임 재사용
         self.duration = 0.25
         self.t = 0.0
 
@@ -583,13 +583,13 @@ class Hit:
             self.ryu.image.clip_draw(sx, sy, sw, sh, draw_x, draw_y)
         else:
             self.ryu.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h', draw_x, draw_y, sw, sh)
-            
+
 
 class Dead:
     def __init__(self, ryu):
         self.ryu = ryu
-        self.quad = (328, 936, 48, 94)
-        self.duration = 1.0
+        self.quads = [(120, 176, 63, 63), (192, 176, 103, 29)]
+        self.duration = 2.0
         self.t = 0.0
 
     def enter(self, e):
@@ -606,9 +606,12 @@ class Dead:
             game_framework.quit()
 
     def draw(self):
-        sx, sy, sw, sh = self.quad
+        frame_count = len(self.quads)
+        idx = min(int((self.t / self.duration) * frame_count), frame_count - 1)
+        sx, sy, sw, sh = self.quads[idx]
+        STAND_H = 92
+        draw_y = (self.ryu.y - STAND_H * 0.5) + sh * 0.5
         draw_x = self.ryu.x
-        draw_y = self.ryu.y
         if self.ryu.state == 'left':
             self.ryu.image.clip_draw(sx, sy, sw, sh, draw_x, draw_y)
         else:
