@@ -186,8 +186,8 @@ class Normal_Attack:
         self.ken = ken
         # 플레이스홀더: 실제 좌표로 교체하세요
         self.attack_frames = {
-            'P_L': [ (0,0,60,90) ],
-            'P_H': [ (0,0,60,90) ],
+            'P_L': [ (0, 744, 59, 64), (62, 744, 49, 64) ],
+            'P_H': [ (184, 632, 49, 88), (248, 632, 43, 88), (128, 632, 45, 88) ],
             'K_L': [ (0,0,60,90) ],
             'K_H': [ (0,0,60,90) ],
         }
@@ -628,6 +628,9 @@ class Ken:
                     self.comma_down: self.JUMP_ATTACK, self.period_down: self.JUMP_ATTACK,
                     self.land: self.IDLE,
                 },
+                self.HIT: {
+                    self.end_hit: self.IDLE
+                },
             }
         )
 
@@ -662,6 +665,8 @@ class Ken:
         self.hp -= amount
         if self.hp < 0:
             self.hp = 0
+            game_framework.quit()
+            return
         if getattr(self, 'HIT', None) is not None and getattr(self, 'state_machine', None):
             if getattr(self.state_machine, 'cur_state', None) is not self.HIT:
                 self.state_machine.handle_state_event(('HIT', None))

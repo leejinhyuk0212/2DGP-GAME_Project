@@ -701,6 +701,7 @@ class Ryu:
         self.hp -= amount
         if self.hp < 0:
             self.hp = 0
-        # StateMachine의 현재 상태 속성명은 `cur_state` 이므로 그걸 사용하도록 수정
+            game_framework.quit()
+            return
         if getattr(self, 'state_machine', None) and getattr(self.state_machine, 'cur_state', None) is not getattr(self,'HIT',None):
             self.state_machine.handle_state_event(('HIT', None))
