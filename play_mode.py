@@ -42,7 +42,7 @@ def init():
 
     LEFT_BOUND = 50
     RIGHT_BOUND = 750
-    MIN_SEPARATION = 60
+    MIN_SEPARATION = 40
 
     p1.min_x = LEFT_BOUND
     p1.max_x = RIGHT_BOUND
