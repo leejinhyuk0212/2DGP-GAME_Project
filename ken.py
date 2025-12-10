@@ -227,7 +227,7 @@ class Normal_Attack:
         sx, sy, sw, sh = self.attack_frames[self.attack_type][idx]
 
         base_w = self.attack_frames[self.attack_type][0][2]
-        dx = ((sw - base_w) * 0.5) * self.ryu.face_dir
+        dx = ((sw - base_w) * 0.5) * self.ken.face_dir
 
         base_h = self.attack_frames[self.attack_type][0][3]
         dy = (sh - base_h) * 0.5
@@ -245,10 +245,10 @@ class Crouch_Attack:
         self.ken = ken
         # 플레이스홀더: 실제 좌표로 교체하세요
         self.attack_frames = {
-            'P_L': [ (0,0,48,60) ],
-            'P_H': [ (0,0,48,60) ],
-            'K_L': [ (0,0,80,70) ],
-            'K_H': [ (0,0,35,70) ],
+            'P_L': [ (288,744,48,60), (176,744,48,60),(408,744,79,59) ],
+            'P_H': [ (288,744,48,60), (176,744,48,60),(408,744,79,59) ],
+            'K_L': [ (208, 464, 85, 61) ],
+            'K_H': [ (304, 464, 36, 31),(136,464,64,59), (352, 464, 88, 56) ],
         }
         self.attack_type = None
         self.action_per_time = 1.0
@@ -334,10 +334,10 @@ class Jump_Attack:
         self.ken = ken
         # 플레이스홀더
         self.attack_frames = {
-            'P_L': [ (0,0,69,63) ],
-            'P_H': [ (0,0,78,64) ],
-            'K_L': [ (0,0,45,87) ],
-            'K_H': [ (0,0,82,100) ],
+            'P_L': [ (184, 360, 69, 61) ],
+            'P_H': [ (96, 360, 74, 64) ],
+            'K_L': [ (488,832,46,64),(544,832,75,88) ],
+            'K_H': [ (184, 232, 77, 79), (272, 232, 86, 80), (432,232, 64, 88), (368, 232, 55, 88) ],
         }
         self.attack_type = None
         self.action_per_time = 1.0
@@ -439,10 +439,10 @@ class Jump_Diag_Attack:
         self.ken = ken
         # 플레이스홀더
         self.attack_frames = {
-            'P_L': [ (0,0,69,63) ],
-            'P_H': [ (0,0,78,64) ],
-            'K_L': [ (0,0,45,87) ],
-            'K_H': [ (0,0,82,100) ],
+            'P_L': [(184, 360, 69, 61)],
+            'P_H': [(96, 360, 74, 64)],
+            'K_L': [(488, 832, 46, 64), (544, 832, 75, 88)],
+            'K_H': [(184, 232, 77, 79), (272, 232, 86, 80), (432, 232, 64, 88), (368, 232, 55, 88)],
         }
         self.attack_type = None
         self.action_per_time = 1.0
@@ -531,8 +531,8 @@ class Sit:
 class Dead:
     def __init__(self, ken):
         self.ken = ken
-        self.quad = (328, 936, 48, 94)
-        self.duration = 1.0
+        self.quads = [(200, 128, 48, 62), (272, 128, 103, 31)]
+        self.duration = 2.0
         self.t = 0.0
 
     def enter(self, e):
@@ -549,9 +549,12 @@ class Dead:
             game_framework.quit()
 
     def draw(self):
-        sx, sy, sw, sh = self.quad
+        frame_count = len(self.quads)
+        idx = min(int((self.t / self.duration) * frame_count), frame_count - 1)
+        sx, sy, sw, sh = self.quads[idx]
+        STAND_H = 92
+        draw_y = (self.ken.y - STAND_H * 0.5) + sh * 0.5
         draw_x = self.ken.x
-        draw_y = self.ken.y
         if self.ken.state == 'left':
             self.ken.image.clip_draw(sx, sy, sw, sh, draw_x, draw_y)
         else:
