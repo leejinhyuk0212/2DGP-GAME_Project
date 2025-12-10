@@ -3,9 +3,14 @@ import game_framework
 from pico2d import *
 import select_mode
 
+bgm = None
+
 def init():
-    global image
+    global image, bgm
     image = load_image('gameover.png')
+    bgm = load_music(('sound/game_over.mp3'))
+    bgm.set_volume(32)
+    bgm.play(1)
 
 def finish():
     global image

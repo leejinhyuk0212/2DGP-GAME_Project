@@ -3,6 +3,7 @@ from pico2d import *
 import title_mode
 import play_mode
 import time
+import os
 
 image = None
 select = None
@@ -40,15 +41,20 @@ blink2_paused = True
 RYU_POSITION = (180, 250)
 KEN_POSITION = (180, 250 - GRID_Y)
 
+bgm=None
 def init():
     global image, select, select2, select_x, select_y
     global blink_visible, last_blink_time, blink_paused
     global select1_pos, select2_pos, selection_phase
     global p1_marker, p1_marker_pos
     global blink2_visible, last_blink_time2, blink2_paused
+    global bgm
 
     image = load_image('characterselect.png')
     select = load_image('select1.png')
+    bgm = load_music(('sound/select_mode_bgm.mp3'))
+    bgm.set_volume(32)
+    bgm.repeat_play()
     try:
         select2 = load_image('select2.png')
     except:
@@ -71,7 +77,7 @@ def init():
     p1_marker_pos = (0, 0)
 
 def finish():
-    global image, select, select2
+    global image, select, select2, bgm
     if image:
         del image
         image = None
@@ -81,6 +87,7 @@ def finish():
     if select2:
         del select2
         select2 = None
+    bgm = None
 
 def update():
     global blink_visible, last_blink_time
@@ -118,6 +125,7 @@ def handle_events():
     global select1_pos, select2_pos, selection_phase
     global p1_marker, p1_marker_pos
     global blink2_paused, last_blink_time2, blink2_visible
+    global bgm2
 
     events = get_events()
     for event in events:
@@ -132,9 +140,16 @@ def handle_events():
                 if selection_phase == 1 and not select1_pos:
                     if select_x == RYU_POSITION[0] and select_y == RYU_POSITION[1]:
                         play_mode.selected_p1 = 'Ryu'
+                        bgm2 = load_wav('sound/ch_select.wav')
+                        bgm2.set_volume(32)
+                        bgm2.play(1)
                         select1_pos = True
                     elif select_x == KEN_POSITION[0] and select_y == KEN_POSITION[1]:
                         play_mode.selected_p1 = 'Ken'
+                        play_mode.selected_p1 = 'Ryu'
+                        bgm2 = load_wav('sound/ch_select.wav')
+                        bgm2.set_volume(32)
+                        bgm2.play(1)
                         select1_pos = True
 
                     if select1_pos:

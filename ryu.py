@@ -5,6 +5,7 @@ from sdl2 import SDLK_a, SDLK_d, SDLK_w, SDLK_s, SDLK_f, SDLK_g, SDLK_v, SDLK_b,
 import game_framework
 import gameover_mode
 from state_machine import StateMachine
+from pico2d import*
 
 PIXEL_PER_METER = (10.0/0.3)
 JUMP_SPEED = 20.0
@@ -166,6 +167,10 @@ class Normal_Attack:
         self.action_per_time = 1.0
 
     def enter(self, e):
+        global bgm
+        bgm = load_wav('sound/whiff_punch.wav')
+        bgm.set_volume(32)
+        bgm.play(1)
         self.ryu.is_attacking = True
         self.ryu._hit_targets.clear()
         self.ryu.frame = 0.0
@@ -226,6 +231,10 @@ class Crouch_Attack:
         self.SIT_H   = 70
 
     def enter(self, e):
+        global bgm
+        bgm = load_wav('sound/whiff_punch.wav')
+        bgm.set_volume(32)
+        bgm.play(1)
         self.ryu.is_attacking = True
         self.ryu._hit_targets.clear()
         self.ryu.frame = 0.0
@@ -286,6 +295,10 @@ class Jump_Attack:
         self.ground_y = 0.0
 
     def enter(self, e):
+        global bgm
+        bgm = load_wav('sound/whiff_punch.wav')
+        bgm.set_volume(32)
+        bgm.play(1)
         self.ryu.is_attacking = True
         self.ryu._hit_targets.clear()
         self.yv = self.ryu.JUMP.yv
@@ -487,6 +500,10 @@ class Jump_Diag_Attack:
         self.ground_y = 0.0
 
     def enter(self, e):
+        global bgm
+        bgm = load_wav('sound/whiff_punch.wav')
+        bgm.set_volume(32)
+        bgm.play(1)
         self.ryu.is_attacking = True
         self.ryu._hit_targets.clear()
 
@@ -561,6 +578,10 @@ class Hit:
         self.t = 0.0
 
     def enter(self, e):
+        global bgm
+        bgm = load_wav('sound/hit.wav')
+        bgm.set_volume(32)
+        bgm.play(1)
         self.t = 0.0
         self.ryu.dir = 0
         if (self.ryu.state == 'left'):

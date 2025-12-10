@@ -11,6 +11,7 @@ from hp_bar import HealthBar
 
 selected_p1 = None
 selected_p2 = None
+bgm = None
 
 def handle_events():
     event_list = get_events()
@@ -22,7 +23,7 @@ def handle_events():
             p2.handle_event(event)
 
 def init():
-    global p1, p2, map, countdown, round_fight, hp_bar, hp_bar2
+    global p1, p2, map, countdown, round_fight, hp_bar, hp_bar2, bgm
     if selected_p1 == 'Ryu' or selected_p1 is None:
         p1 = Ryu(player=1)
     elif selected_p1 == 'Ken':
@@ -72,6 +73,10 @@ def init():
 
     game_world.add_collision_pair('p1:p2', p1, None)
     game_world.add_collision_pair('p1:p2', None, p2)
+
+    bgm = load_music('sound/start_battle.mp3')
+    bgm.set_volume(64)
+    bgm.play(1)
 
 def finish():
     pass

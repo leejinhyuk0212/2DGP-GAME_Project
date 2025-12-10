@@ -5,6 +5,7 @@ from sdl2 import SDLK_a, SDLK_d, SDLK_w, SDLK_s, SDLK_f, SDLK_g, SDLK_v, SDLK_b,
 import game_framework
 from state_machine import StateMachine
 import gameover_mode
+from pico2d import*
 
 PIXEL_PER_METER = (10.0/0.3)
 JUMP_SPEED = 20.0
@@ -161,6 +162,10 @@ class Hit:
         self.t = 0.0
 
     def enter(self, e):
+        global bgm
+        bgm = load_wav('sound/hit.wav')
+        bgm.set_volume(32)
+        bgm.play(1)
         self.t = 0.0
         self.ken.dir = 0
         if (self.ken.state == 'left'):
@@ -201,6 +206,10 @@ class Normal_Attack:
         self.action_per_time = 1.0
 
     def enter(self, e):
+        global bgm
+        bgm = load_wav('sound/whiff_punch.wav')
+        bgm.set_volume(32)
+        bgm.play(1)
         self.ken.is_attacking = True
         self.ken._hit_targets.clear()
         self.ken.frame = 0.0
@@ -258,6 +267,10 @@ class Crouch_Attack:
         self.SIT_H = 70
 
     def enter(self, e):
+        global bgm
+        bgm = load_wav('sound/whiff_punch.wav')
+        bgm.set_volume(32)
+        bgm.play(1)
         self.ken.is_attacking = True
         self.ken._hit_targets.clear()
         self.ken.frame = 0.0
@@ -347,6 +360,10 @@ class Jump_Attack:
         self.ground_y = 0.0
 
     def enter(self, e):
+        global bgm
+        bgm = load_wav('sound/whiff_punch.wav')
+        bgm.set_volume(32)
+        bgm.play(1)
         self.ken.is_attacking = True
         self.ken._hit_targets.clear()
         # 현재 점프 상태에서 정보 가져오기
@@ -453,6 +470,10 @@ class Jump_Diag_Attack:
         self.ground_y = 0.0
 
     def enter(self, e):
+        global bgm
+        bgm = load_wav('sound/whiff_punch.wav')
+        bgm.set_volume(32)
+        bgm.play(1)
         self.ken.is_attacking = True
         self.ken._hit_targets.clear()
         self.yv = getattr(self.ken, 'air_yv', JUMP_SPEED)
