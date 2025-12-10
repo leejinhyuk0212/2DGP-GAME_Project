@@ -189,10 +189,11 @@ class Normal_Attack:
         self.ken = ken
         # 플레이스홀더: 실제 좌표로 교체하세요
         self.attack_frames = {
-            'P_L': [ (0, 744, 59, 64), (62, 744, 49, 64) ],
-            'P_H': [ (184, 632, 49, 88), (248, 632, 43, 88), (128, 632, 45, 88) ],
-            'K_L': [ (0,0,60,90) ],
-            'K_H': [ (0,0,60,90) ],
+            'P_L': [ (8, 640, 61, 92), (80, 640, 74, 92) ],
+            'P_H': [ (272, 640, 54, 92), (336, 640, 47, 92), (168, 640, 93, 89) ],
+            'K_L': [ (456,640,48,93), (8,536,89,84) ],
+            'K_H': [ (392, 536, 37, 90), (320, 536, 59, 88), (100, 536, 87, 83),
+                     (264,536,47,93),(200,536,53,95)],
         }
         self.attack_type = None
         self.frame = 0.0
@@ -224,12 +225,16 @@ class Normal_Attack:
     def draw(self):
         idx = min(int(self.ken.frame), len(self.attack_frames[self.attack_type]) - 1)
         sx, sy, sw, sh = self.attack_frames[self.attack_type][idx]
+
         base_w = self.attack_frames[self.attack_type][0][2]
-        dx = ((sw - base_w) * 0.5) * self.ken.face_dir
+        dx = ((sw - base_w) * 0.5) * self.ryu.face_dir
+
         base_h = self.attack_frames[self.attack_type][0][3]
         dy = (sh - base_h) * 0.5
+
         draw_x = self.ken.x + dx
         draw_y = self.ken.y + dy
+
         if self.ken.state == 'left':
             self.ken.image.clip_draw(sx, sy, sw, sh, draw_x, draw_y)
         else:
