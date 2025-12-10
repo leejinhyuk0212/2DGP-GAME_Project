@@ -3,6 +3,7 @@ from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDLK_RIGHT, SDLK_LEFT, SDLK_k, SDLK_l,
 from sdl2 import SDLK_a, SDLK_d, SDLK_w, SDLK_s, SDLK_f, SDLK_g, SDLK_v, SDLK_b, SDLK_c
 
 import game_framework
+import gameover_mode
 from state_machine import StateMachine
 
 PIXEL_PER_METER = (10.0/0.3)
@@ -589,7 +590,7 @@ class Dead:
     def __init__(self, ryu):
         self.ryu = ryu
         self.quads = [(120, 176, 63, 63), (192, 176, 103, 29)]
-        self.duration = 2.0
+        self.duration = 3.0
         self.t = 0.0
 
     def enter(self, e):
@@ -603,7 +604,7 @@ class Dead:
     def do(self):
         self.t += game_framework.frame_time
         if self.t >= self.duration:
-            game_framework.quit()
+            game_framework.change_mode(gameover_mode)
 
     def draw(self):
         frame_count = len(self.quads)

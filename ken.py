@@ -4,6 +4,7 @@ from sdl2 import SDLK_a, SDLK_d, SDLK_w, SDLK_s, SDLK_f, SDLK_g, SDLK_v, SDLK_b,
 
 import game_framework
 from state_machine import StateMachine
+import gameover_mode
 
 PIXEL_PER_METER = (10.0/0.3)
 JUMP_SPEED = 20.0
@@ -532,7 +533,7 @@ class Dead:
     def __init__(self, ken):
         self.ken = ken
         self.quads = [(200, 128, 63, 62), (272, 128, 103, 31)]
-        self.duration = 2.0
+        self.duration = 3.0
         self.t = 0.0
 
     def enter(self, e):
@@ -546,7 +547,7 @@ class Dead:
     def do(self):
         self.t += game_framework.frame_time
         if self.t >= self.duration:
-            game_framework.quit()
+            game_framework.change_mode(gameover_mode)
 
     def draw(self):
         frame_count = len(self.quads)
