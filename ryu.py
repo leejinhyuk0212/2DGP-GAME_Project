@@ -789,12 +789,10 @@ class Ryu:
         return self.x-30, self.y-30,self.x+30,self.y+30
 
     def get_action_bb(self):
-        """현재 상태(특히 공격)의 sx,sy,sw,sh을 이용해 AABB 반환. 없으면 get_bb() 폴백."""
         STAND_H = 92
 
         st = getattr(self.state_machine, 'cur_state', None)
 
-        # 공격 계열 상태인지 확인 (attack_frames 존재 여부로 판단)
         if st and hasattr(st, 'attack_frames') and getattr(st, 'attack_type', None) is not None:
             try:
                 attack_type = st.attack_type
@@ -802,7 +800,6 @@ class Ryu:
                 if not frames:
                     return self.get_bb()
 
-                # 상태에 frame이 없을 수 있으므로 상태.frame -> self.frame 폴백
                 raw_frame = getattr(st, 'frame', None)
                 if raw_frame is None:
                     raw_frame = getattr(self, 'frame', 0.0)
@@ -810,12 +807,10 @@ class Ryu:
 
                 sx, sy, sw, sh = frames[idx]
 
-                # 기본 보정: 대부분의 draw()에서 사용한 보정 재현
                 base_w = frames[0][2] if frames else sw
                 base_h = frames[0][3] if frames else sh
                 dx = ((sw - base_w) * 0.5) * getattr(self, 'face_dir', 1)
 
-                # 앉기/점프 계열은 세로 앵커를 STAND_H 기준으로 처리
                 cls_name = st.__class__.__name__.lower()
                 if 'crouch' in cls_name or 'sit' in cls_name or 'jump' in cls_name:
                     draw_x = self.x + dx
@@ -831,10 +826,8 @@ class Ryu:
                 top = draw_y + sh * 0.5
                 return left, bottom, right, top
             except Exception:
-                # 실패 시 폴백
                 return self.get_bb()
 
-        # 가드 등 별도 상태(혹은 기본)일 경우 기존 바운딩박스 사용
         return self.get_bb()
 
     def handle_collision(self, group, other):
