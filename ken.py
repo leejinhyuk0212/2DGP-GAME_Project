@@ -715,9 +715,28 @@ class Ken:
             }
         )
 
-
     def update(self):
         self.state_machine.update()
+        try:
+            self.clamp_position()
+        except Exception:
+            pass
+
+    def clamp_position(self):
+        if hasattr(self, 'min_x'):
+            if self.x < self.min_x:
+                self.x = self.min_x
+        if hasattr(self, 'max_x'):
+            if self.x > self.max_x:
+                self.x = self.max_x
+
+        opp = getattr(self, 'opponent', None)
+        sep = getattr(self, 'min_separation', None)
+        if opp is not None and sep is not None:
+            if self.x < opp.x and (self.x + sep) > opp.x:
+                self.x = opp.x - sep
+            elif self.x > opp.x and (self.x - sep) < opp.x:
+                self.x = opp.x + sep
 
     def set_camera(self, map_obj):
         self._camera = map_obj

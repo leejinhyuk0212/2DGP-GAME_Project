@@ -39,6 +39,21 @@ def init():
     p2.state = 'right'
     p1.x=200
     p2.x=600
+
+    LEFT_BOUND = 50
+    RIGHT_BOUND = 750
+    MIN_SEPARATION = 60
+
+    p1.min_x = LEFT_BOUND
+    p1.max_x = RIGHT_BOUND
+    p1.min_separation = MIN_SEPARATION
+    p1.opponent = p2
+
+    p2.min_x = LEFT_BOUND
+    p2.max_x = RIGHT_BOUND
+    p2.min_separation = MIN_SEPARATION
+    p2.opponent = p1
+
     map = Map1()
     hp_bar = HealthBar(p1)
     hp_bar2 = HealthBar(p2)
