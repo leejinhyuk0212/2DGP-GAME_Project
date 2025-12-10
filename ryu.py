@@ -1,6 +1,6 @@
 from pico2d import load_image, get_time
 from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDLK_RIGHT, SDLK_LEFT, SDLK_k, SDLK_l, SDL_KEYUP, SDLK_DOWN, SDLK_COMMA, SDLK_PERIOD, SDLK_UP, SDLK_SLASH
-from sdl2 import SDLK_a, SDLK_d, SDLK_w, SDLK_s, SDLK_f, SDLK_g, SDLK_v, SDLK_b
+from sdl2 import SDLK_a, SDLK_d, SDLK_w, SDLK_s, SDLK_f, SDLK_g, SDLK_v, SDLK_b, SDLK_c
 
 import game_framework
 from state_machine import StateMachine
@@ -617,6 +617,30 @@ class Dead:
         else:
             self.ryu.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h', draw_x, draw_y, sw, sh)
 
+class Guard:
+    def __init__(self, fighter):
+        self.fighter = fighter
+        self.quad = (8, 904, 45, 70)
+
+    def enter(self, e):
+        self.fighter.is_guarding = True
+        self.fighter.dir = 0
+        self.fighter.frame = 0.0
+
+    def exit(self, e):
+        self.fighter.is_guarding = False
+
+    def do(self):
+        pass
+
+    def draw(self):
+        sx, sy, sw, sh = self.quad
+        STAND_H = 92
+        draw_y = (self.fighter.y - STAND_H * 0.5) + sh * 0.5
+        if self.fighter.state == 'left':
+            self.fighter.image.clip_draw(sx, sy, sw, sh, self.fighter.x, draw_y)
+        else:
+            self.fighter.image.clip_composite_draw(sx, sy, sw, sh, 0, 'h', self.fighter.x, draw_y, sw, sh)
 
 class Ryu:
     def __init__(self, player=1):
@@ -636,13 +660,13 @@ class Ryu:
             self.keymap = {
                 'LEFT': SDLK_LEFT, 'RIGHT': SDLK_RIGHT, 'UP': SDLK_UP, 'DOWN': SDLK_DOWN,
                 'K': SDLK_k, 'L': SDLK_l, 'COMMA': SDLK_COMMA, 'PERIOD': SDLK_PERIOD,
-                'SPACE': SDLK_SPACE, 'SLASH': SDLK_SLASH
+                'SPACE': SDLK_SPACE, 'SLASH': SDLK_SLASH, 'SLASH_ALT': SDLK_SLASH, 'BLOCK': SDLK_SLASH  # P1: /
             }
         else:
             self.keymap = {
                 'LEFT': SDLK_a, 'RIGHT': SDLK_d, 'UP': SDLK_w, 'DOWN': SDLK_s,
                 'K': SDLK_f, 'L': SDLK_g, 'COMMA': SDLK_v, 'PERIOD': SDLK_b,
-                'SPACE': SDLK_SPACE, 'SLASH': SDLK_SLASH
+                'SPACE': SDLK_SPACE, 'SLASH': SDLK_SLASH, 'BLOCK': SDLK_c  # P2: c
             }
 
         self.time_out = lambda e: e[0] == 'TIMEOUT'
@@ -663,6 +687,8 @@ class Ryu:
         self.hit = lambda e: e[0] == 'HIT'
         self.end_hit = lambda e: e[0] == 'END_HIT'
         self.dead = lambda e: e[0] == 'DEAD'
+        self.block_down = lambda e: e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == self.keymap['BLOCK']
+        self.block_up = lambda e: e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == self.keymap['BLOCK']
 
         self.IDLE = Idle(self)
         self.RUN = Run(self)
@@ -675,7 +701,9 @@ class Ryu:
         self.JUMP_DIAG_ATTACK = Jump_Diag_Attack(self)
         self.HIT = Hit(self)
         self.DEAD = Dead(self)
+        self.GUARD = Guard(self)
 
+        self.is_guarding = False
         self.is_attacking = False
         self._hit_targets = set()
 
@@ -689,18 +717,21 @@ class Ryu:
                     self.comma_down: self.ATTACK, self.period_down: self.ATTACK,
                     self.down_down: self.SIT, self.up_down: self.JUMP,
                     self.hit: self.HIT, self.dead: self.DEAD,
+                    self.block_down: self.GUARD,
                 },
                 self.RUN: {
                     self.right_up: self.IDLE, self.left_up: self.IDLE,
                     self.k_down: self.ATTACK, self.l_down: self.ATTACK,
                     self.comma_down: self.ATTACK, self.period_down: self.ATTACK,
                     self.up_down: self.JUMP_DIAG, self.hit: self.HIT, self.dead: self.DEAD,
+                    self.block_down: self.GUARD,
                 },
                 self.ATTACK: {self.end_attack: self.IDLE},
                 self.SIT: {
                     self.k_down: self.CROUCH_ATTACK, self.l_down: self.CROUCH_ATTACK,
                     self.comma_down: self.CROUCH_ATTACK, self.period_down: self.CROUCH_ATTACK,
                     self.down_up: self.IDLE, self.hit: self.HIT, self.dead: self.DEAD,
+                    self.block_down: self.GUARD,
                 },
                 self.CROUCH_ATTACK: {
                     self.k_down: self.CROUCH_ATTACK, self.l_down: self.CROUCH_ATTACK,
@@ -732,6 +763,10 @@ class Ryu:
                 },
                 self.DEAD: {
                 },
+                self.GUARD: {
+                    self.block_up: self.IDLE,
+                    self.dead: self.DEAD,
+                },
             }
         )
 
@@ -743,9 +778,6 @@ class Ryu:
 
     def handle_event(self, event):
         self.state_machine.handle_state_event(('INPUT', event))
-
-        if event.type == SDL_KEYDOWN and event.key == SDLK_SLASH:
-            self.take_damage(5)
 
 
     def draw(self):
@@ -767,10 +799,15 @@ class Ryu:
                     self.take_damage(5)
 
     def take_damage(self, amount):
+        if getattr(self, 'is_guarding', False):
+            return
         self.hp -= amount
         if self.hp < 0:
             self.hp = 0
-            if getattr(self, 'state_machine', None) and getattr(self.state_machine, 'cur_state', None) is not getattr(self, 'DEAD', None):
+            if getattr(self, 'state_machine', None) and getattr(self.state_machine, 'cur_state', None) is not getattr(
+                    self, 'DEAD', None):
                 self.state_machine.handle_state_event(('DEAD', None))
-        if getattr(self, 'state_machine', None) and getattr(self.state_machine, 'cur_state', None) is not getattr(self,'HIT',None):
-            self.state_machine.handle_state_event(('HIT', None))
+        if not getattr(self, 'is_guarding', False):
+            if getattr(self, 'state_machine', None) and getattr(self.state_machine, 'cur_state', None) is not getattr(
+                    self, 'HIT', None):
+                self.state_machine.handle_state_event(('HIT', None))
